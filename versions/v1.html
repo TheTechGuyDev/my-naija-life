@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b6e3a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="My Naija Life">
+<title>My Naija Life</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#0d1b12;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#fff;touch-action:none;overscroll-behavior:none}
+canvas#game{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+
+#hud{position:fixed;top:max(8px,env(safe-area-inset-top));left:max(8px,env(safe-area-inset-left));display:flex;gap:8px;align-items:stretch;pointer-events:none;z-index:5}
+.card{background:rgba(10,22,15,.84);border:1px solid rgba(255,255,255,.13);border-radius:12px;padding:7px 11px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.lbl{font-size:10px;letter-spacing:.06em;text-transform:uppercase;opacity:.7}
+.big{font-size:17px;font-weight:800;line-height:1.15}
+.small{font-size:11px;opacity:.85;text-transform:none;letter-spacing:0}
+#hMoney{color:#7dffa8}
+.row{display:flex;align-items:center;gap:6px;font-size:11px;height:15px}
+.row span{width:16px;text-align:center}
+.bar{width:96px;height:8px;background:rgba(255,255,255,.14);border-radius:4px;overflow:hidden}
+.bar>i{display:block;height:100%;width:50%;border-radius:4px;transition:width .25s}
+#bHealth{background:#ff5a5a}#bEnergy{background:#ffd23f}#bRep{background:#5ab4ff}
+.num{width:24px;text-align:right;opacity:.85;font-variant-numeric:tabular-nums}
+
+#topRight{position:fixed;top:max(8px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right));display:flex;flex-direction:column;align-items:flex-end;gap:6px;z-index:6}
+#menuBtn{pointer-events:auto;width:42px;height:42px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(10,22,15,.84);color:#fff;font-size:20px;cursor:pointer}
+#mini{width:150px;height:100px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:#1d3a24;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+
+#hint{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);background:rgba(10,22,15,.88);border:1px solid rgba(125,255,168,.4);padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap;display:none;z-index:5;pointer-events:none}
+#actBtn{position:fixed;right:max(22px,env(safe-area-inset-right));bottom:max(22px,env(safe-area-inset-bottom));width:78px;height:78px;border-radius:50%;border:3px solid rgba(255,255,255,.55);background:rgba(11,138,74,.85);color:#fff;font-weight:800;font-size:14px;display:none;z-index:6;touch-action:none;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+#actBtn.dim{background:rgba(40,60,48,.6);border-color:rgba(255,255,255,.25)}
+
+#joy{position:fixed;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.28);z-index:4;pointer-events:none;display:none}
+#knob{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:rgba(255,255,255,.45)}
+#joyGhost{position:fixed;left:max(40px,env(safe-area-inset-left));bottom:max(40px,env(safe-area-inset-bottom));width:110px;height:110px;border-radius:50%;border:2px dashed rgba(255,255,255,.25);display:none;align-items:center;justify-content:center;font-size:11px;opacity:.7;text-align:center;z-index:3;pointer-events:none}
+
+#toasts{position:fixed;top:72px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;z-index:20;pointer-events:none;width:min(92vw,520px)}
+.toast{background:rgba(10,22,15,.94);border-left:4px solid #7dffa8;padding:8px 14px;border-radius:10px;font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,.35);animation:tin .25s ease-out;text-align:center}
+.toast.bad{border-left-color:#ff5a5a}.toast.info{border-left-color:#5ab4ff}
+@keyframes tin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+
+#panel{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:30;padding:10px}
+#panel.show{display:flex}
+.box{position:relative;width:min(620px,96vw);max-height:92vh;overflow:auto;background:linear-gradient(180deg,#143023,#0f2219);border:1px solid rgba(125,255,168,.25);border-radius:16px;padding:16px 16px 14px;box-shadow:0 18px 50px rgba(0,0,0,.5);touch-action:pan-y}
+#pClose{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;font-size:18px;cursor:pointer}
+#pTitle{font-size:20px;font-weight:800;padding-right:40px}
+#pSub{font-size:12.5px;opacity:.8;margin-top:3px;padding-right:40px}
+#pBody{font-size:13px;line-height:1.5;margin-top:10px}
+#pBody:empty{display:none}
+#pBody .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px}
+#pBody .kv b{opacity:.7;font-weight:600}
+#pBody ul{padding-left:18px}
+#pOpts{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:12px}
+.opt{text-align:left;padding:10px 12px;border-radius:11px;border:1px solid rgba(125,255,168,.3);background:rgba(11,138,74,.22);color:#fff;cursor:pointer;font-size:13.5px;line-height:1.3}
+.opt:active{transform:scale(.98)}
+.opt span{display:block;font-size:11.5px;opacity:.75;margin-top:2px}
+.opt.dis{opacity:.45;border-color:rgba(255,255,255,.15);background:rgba(255,255,255,.04)}
+.opt.cur{border-color:#ffd23f;background:rgba(255,210,63,.15)}
+
+#rotate{position:fixed;inset:0;background:#0b6e3a;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:100;text-align:center;padding:24px}
+#rotate .ph{width:54px;height:90px;border:4px solid #fff;border-radius:10px;animation:rot 1.8s ease-in-out infinite}
+@keyframes rot{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(90deg)}}
+@media (orientation:portrait) and (pointer:coarse){#rotate{display:flex}}
+@media (max-height:430px){
+  .big{font-size:14px}.bar{width:72px}.card{padding:5px 8px}
+  #mini{width:120px;height:80px}#menuBtn{width:36px;height:36px;font-size:17px}
+  #pTitle{font-size:17px}#pOpts{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  #toasts{top:56px}
+}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud">
+  <div class="card">
+    <div class="lbl">Wallet</div>
+    <div id="hMoney" class="big">₦0</div>
+    <div class="lbl small" id="hBank">Bank: ₦0</div>
+  </div>
+  <div class="card">
+    <div class="row"><span>❤️</span><div class="bar"><i id="bHealth"></i></div><span class="num" id="nHealth">0</span></div>
+    <div class="row"><span>⚡</span><div class="bar"><i id="bEnergy"></i></div><span class="num" id="nEnergy">0</span></div>
+    <div class="row"><span>⭐</span><div class="bar"><i id="bRep"></i></div><span class="num" id="nRep">0</span></div>
+  </div>
+  <div class="card">
+    <div class="big" id="hTime">07:00</div>
+    <div class="lbl small" id="hDay">Day 1</div>
+    <div class="lbl small" id="hJob">Unemployed</div>
+  </div>
+</div>
+
+<div id="topRight">
+  <button id="menuBtn" aria-label="Menu">☰</button>
+  <canvas id="mini" width="300" height="200"></canvas>
+</div>
+
+<div id="toasts"></div>
+<div id="hint"></div>
+<button id="actBtn">ENTER</button>
+<div id="joy"><div id="knob"></div></div>
+<div id="joyGhost">Drag to<br>move</div>
+
+<div id="panel">
+  <div class="box">
+    <button id="pClose" aria-label="Close">✕</button>
+    <div id="pTitle"></div>
+    <div id="pSub"></div>
+    <div id="pBody"></div>
+    <div id="pOpts"></div>
+  </div>
+</div>
+
+<div id="rotate">
+  <div class="ph"></div>
+  <div style="font-size:20px;font-weight:800">Turn your phone sideways</div>
+  <div style="opacity:.85;font-size:14px">My Naija Life plays in landscape mode.</div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* =========================================================
+   CORE SETUP
+   ========================================================= */
+const T = 40, COLS = 60, ROWS = 40, WW = COLS * T, WH = ROWS * T;
+const TIME_SCALE = 1.5;            // game minutes per real second
+const SAVE_KEY = 'mynaijalife_v1';
+const $ = id => document.getElementById(id);
+const canvas = $('game'), ctx = canvas.getContext('2d');
+let vw = 0, vh = 0, dpr = 1;
+function resize(){
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  vw = window.innerWidth; vh = window.innerHeight;
+  canvas.width = Math.floor(vw * dpr); canvas.height = Math.floor(vh * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize); resize();
+
+const isTouch = window.matchMedia('(pointer: coarse)').matches || ('ontouchstart' in window);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = n => '₦' + Math.round(n).toLocaleString('en-NG');
+function mulberry(seed){ let a = seed >>> 0; return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const srand = mulberry(20261005);
+const hash = (c, r) => { const s = Math.sin(c * 12.9898 + r * 78.233) * 43758.5453; return s - Math.floor(s); };
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const WEEKDAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+/* =========================================================
+   GAME DATA
+   ========================================================= */
+const ROAD_ROWS = [9, 20, 31], ROAD_COLS = [14, 30, 46];
+
+const BUILDINGS = [
+  {id:'home',     name:'Your Home',              x:2,  y:4,  w:6, h:5, color:'#c98b5a', roof:'#8a4b2a'},
+  {id:'mamaput',  name:"Mama Nkechi's Buka",     x:17, y:5,  w:5, h:4, color:'#e3b04b', roof:'#a8432c'},
+  {id:'market',   name:'Oja Market',             x:23, y:4,  w:6, h:5, color:'#d97d3a', roof:'#6b3b1f'},
+  {id:'bank',     name:'Naija Trust Bank',       x:33, y:3,  w:7, h:6, color:'#3b6fb6', roof:'#1f3d6b'},
+  {id:'hospital', name:'General Hospital',       x:49, y:3,  w:8, h:6, color:'#e8eef2', roof:'#c0392b'},
+  {id:'school',   name:'Unity College & Poly',   x:2,  y:13, w:9, h:7, color:'#9fb86a', roof:'#4f6b2b'},
+  {id:'jobs',     name:'Lagos Business Hub',     x:17, y:14, w:7, h:6, color:'#7a8a99', roof:'#3c4650'},
+  {id:'news',     name:'Newsstand',              x:26, y:16, w:3, h:4, color:'#f2d16b', roof:'#2d7a3f'},
+  {id:'lg',       name:'Local Govt Secretariat', x:33, y:13, w:9, h:7, color:'#e6e0cf', roof:'#0b6e3a'},
+  {id:'church',   name:'Grace Assembly',         x:48, y:14, w:5, h:6, color:'#f0ece2', roof:'#6c4ab0'},
+  {id:'mosque',   name:'Central Mosque',         x:54, y:14, w:5, h:6, color:'#eaf4ec', roof:'#1e8a5a'},
+  {id:'estate',   name:'Shelter Real Estate',    x:2,  y:24, w:7, h:7, color:'#b78fd6', roof:'#5b3a7a'},
+  {id:'barber',   name:'Kutz Barbing Salon',     x:17, y:26, w:5, h:5, color:'#5fb3c9', roof:'#2a5e6b'},
+  {id:'motors',   name:'Oga Motors',             x:33, y:24, w:9, h:7, color:'#d6d6d6', roof:'#b33a3a'},
+  {id:'joint',    name:'Chill Spot',             x:49, y:25, w:8, h:6, color:'#4a3b5c', roof:'#e0559b'}
+];
+const B = {};
+BUILDINGS.forEach(b => {
+  b.doorC = b.x + Math.floor(b.w / 2);
+  b.frontX = (b.doorC + 0.5) * T;
+  b.frontY = (b.y + b.h + 0.5) * T;
+  B[b.id] = b;
+});
+
+const DECOR = [[2,34,5,4],[9,34,4,4],[17,34,5,4],[24,34,5,4],[33,34,4,4],[39,34,5,4],[49,34,4,4],[55,34,4,4]].map((d, i) => ({
+  x:d[0], y:d[1], w:d[2], h:d[3], name:'',
+  doorC: d[0] + Math.floor(d[2] / 2),
+  color:['#d9a57a','#c7b299','#a7c4a0','#d4b483','#b9a1c9','#e0c08a','#9fbfcf','#cfa89a'][i],
+  roof:['#7a3b2a','#5d4a3a','#3f6b45','#7a5a2a','#5a3f72','#8a5a1a','#3a5f72','#6a3a3a'][i]
+}));
+
+const SOLIDS = [...BUILDINGS, ...DECOR].map(b => ({x:b.x*T, y:b.y*T, w:b.w*T, h:b.h*T}));
+
+const ITEMS = {
+  bread:       {name:'Agege Bread',        price:1500, energy:12, health:0},
+  indomie:     {name:'Indomie (pack)',     price:1200, energy:12, health:0},
+  garri:       {name:'Garri & Groundnut',  price:800,  energy:8,  health:0},
+  water:       {name:'Pure Water (bag)',   price:500,  energy:5,  health:1},
+  malt:        {name:'Malt Drink',         price:700,  energy:7,  health:0},
+  suya:        {name:'Suya Wrap',          price:2000, energy:15, health:0},
+  paracetamol: {name:'Paracetamol',        price:600,  energy:0,  health:10},
+  vitamins:    {name:'Multivitamins',      price:3500, energy:0,  health:20}
+};
+const MARKET_ITEMS = ['bread','indomie','garri','water','malt','suya'];
+const PHARM_ITEMS = ['paracetamol','vitamins'];
+
+const EDU = ['No certificate','SSCE','OND','BSc'];
+const COURSES = [
+  {lvl:1, name:'SSCE (WAEC)',          fee:45000,  classes:3},
+  {lvl:2, name:'OND Business Admin',   fee:250000, classes:6},
+  {lvl:3, name:'BSc Economics',        fee:600000, classes:10}
+];
+
+const JOBS = [
+  {id:'labourer', name:'Site Labourer',    pay:8000,  energy:35, hours:8, edu:0},
+  {id:'sales',    name:'Shop Sales Rep',   pay:12000, energy:25, hours:8, edu:1},
+  {id:'okada',    name:'Okada Rider',      pay:18000, energy:40, hours:8, edu:0, needsOkada:true},
+  {id:'office',   name:'Office Assistant', pay:22000, energy:25, hours:8, edu:2},
+  {id:'banker',   name:'Bank Officer',     pay:40000, energy:30, hours:9, edu:3, rep:60}
+];
+const JOB = {}; JOBS.forEach(j => JOB[j.id] = j);
+
+const HOUSING = [
+  {name:'Face-me-I-face-you room', rent:25000,  sleep:70,  rep:0},
+  {name:'Self-contain',            rent:60000,  sleep:90,  rep:3},
+  {name:'Mini flat',               rent:120000, sleep:100, rep:6},
+  {name:'2-Bedroom flat (Lekki)',  rent:350000, sleep:100, rep:12}
+];
+
+const NEWS = [
+  {h:'Fuel price jumps again at filling stations', mod:1.15},
+  {h:'CBN holds interest rate steady, markets calm', mod:1.0},
+  {h:'Tomato scarcity hits markets nationwide', mod:1.2},
+  {h:'Bumper harvest: food prices ease in Lagos markets', mod:0.9},
+  {h:'Naira gains slightly against the dollar', mod:0.95},
+  {h:'Transport unions call off planned strike', mod:1.0},
+  {h:'Heavy rainfall causes gridlock across the city', mod:1.05},
+  {h:'Government opens new minimum wage talks', mod:1.0},
+  {h:'Super Eagles win friendly, fans jubilate', mod:1.0},
+  {h:'Electricity tariff review sparks debate', mod:1.08},
+  {h:'Traders protest new market levy', mod:1.1},
+  {h:'Rice importers report bigger shipments', mod:0.92},
+  {h:'Tech startups in Yaba announce new hiring drive', mod:1.0},
+  {h:'Diesel scarcity: generators go quiet in some areas', mod:1.12}
+];
+
+const NPC_NAMES = ['Chinedu','Aisha','Tunde','Ngozi','Emeka','Bisi','Musa','Funke','Ifeanyi','Zainab','Segun','Amaka','Yusuf','Kemi'];
+const NPC_ROLES = ['Trader','Student','Okada man','Teacher','Banker','Tailor','Pastor','Mechanic','Nurse','Hairdresser','Civil servant','Hustler','Driver','Caterer'];
+const LINES = [
+  'How far? Hope body dey inside cream?',
+  'This Lagos traffic go kill person o!',
+  'Abeg, you get change for ₦1,000?',
+  'Na God dey run am, my brother.',
+  'Hustle no dey stop, sha.',
+  'I hear say fuel price don go up again.',
+  "Shey you don chop today? Mama Nkechi's buka dey sweet!",
+  'Make we see for Chill Spot this evening.',
+  'No wahala, everything go better.',
+  'Bank queue for this town no be here o.',
+  "You don register your NIN? Bank no go gree without am.",
+  'School fees don cost, but education na key.'
+];
+const TIPS = [
+  'Register your NIN at the Local Govt Secretariat before you try to bank.',
+  'Work one shift a day at Lagos Business Hub once you get a job.',
+  'Better certificates from Unity College unlock better paying jobs.',
+  'Sleep at home after 6pm to restore energy. Better houses restore more.',
+  'Read the newspaper. Big news moves food prices.',
+  'If your energy hits zero, your health starts dropping. Chop before you collapse!',
+  'Rent comes out every 7 days. Keep cash or bank savings ready.',
+  'An okada from Oga Motors makes you faster and unlocks the Okada Rider job.'
+];
+
+/* =========================================================
+   WORLD GENERATION
+   ========================================================= */
+function isRoad(c, r){ return ROAD_ROWS.some(y => r === y || r === y + 1) || ROAD_COLS.some(x => c === x || c === x + 1); }
+function nearRoad(c, r){
+  if (isRoad(c, r)) return false;
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (isRoad(c + dx, r + dy)) return true;
+  return false;
+}
+function inSolidTile(c, r, m){
+  return [...BUILDINGS, ...DECOR].some(b => c >= b.x - m && c < b.x + b.w + m && r >= b.y - m && r < b.y + b.h + m);
+}
+
+const ground = document.createElement('canvas'); ground.width = WW; ground.height = WH;
+const canopy = document.createElement('canvas'); canopy.width = WW; canopy.height = WH;
+(function buildGround(){
+  const g = ground.getContext('2d');
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++){
+    let col;
+    if (isRoad(c, r)) col = '#3b3d42';
+    else if (nearRoad(c, r)) col = (c + r) % 2 ? '#bcb6a7' : '#b4ae9f';
+    else { const v = hash(c, r); col = v < 0.33 ? '#4f9a43' : v < 0.66 ? '#55a248' : '#4a943f'; }
+    g.fillStyle = col; g.fillRect(c * T, r * T, T, T);
+    if (!isRoad(c, r) && !nearRoad(c, r)){
+      g.fillStyle = 'rgba(30,80,30,.35)';
+      for (let k = 0; k < 3; k++){ const hx = hash(c + k * 7, r) * T, hy = hash(c, r + k * 5) * T; g.fillRect(c * T + hx, r * T + hy, 2, 4); }
+    }
+  }
+  // road markings
+  g.fillStyle = '#f2c94c';
+  ROAD_ROWS.forEach(R => { const y = (R + 1) * T; for (let x = 0; x < WW; x += 40){ const c = Math.floor(x / T); if (!ROAD_COLS.some(v => c === v || c === v + 1)) g.fillRect(x + 9, y - 2, 22, 4); } });
+  ROAD_COLS.forEach(C => { const x = (C + 1) * T; for (let y = 0; y < WH; y += 40){ const r = Math.floor(y / T); if (!ROAD_ROWS.some(v => r === v || r === v + 1)) g.fillRect(x - 2, y + 9, 4, 22); } });
+  // zebra crossings
+  g.fillStyle = 'rgba(255,255,255,.75)';
+  ROAD_ROWS.forEach(R => ROAD_COLS.forEach(C => {
+    for (let i = 0; i < 5; i++){ g.fillRect(C * T - 14, R * T + 4 + i * 15, 10, 8); g.fillRect((C + 2) * T + 4, R * T + 4 + i * 15, 10, 8); }
+  }));
+  // trees
+  const cp = canopy.getContext('2d');
+  let placed = 0;
+  for (let i = 0; i < 600 && placed < 150; i++){
+    const c = Math.floor(srand() * COLS), r = Math.floor(srand() * ROWS);
+    if (isRoad(c, r) || nearRoad(c, r) || inSolidTile(c, r, 1)) continue;
+    const x = (c + 0.5) * T + (srand() - 0.5) * 14, y = (r + 0.5) * T + (srand() - 0.5) * 14, s = 15 + srand() * 9;
+    g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(x + 5, y + 10, s, s * 0.45, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#6b4423'; g.fillRect(x - 3, y - 2, 6, 14);
+    const palm = srand() < 0.35;
+    if (palm){
+      cp.strokeStyle = '#2f7d32'; cp.lineWidth = 5; cp.lineCap = 'round';
+      for (let k = 0; k < 6; k++){ const a = k / 6 * Math.PI * 2; cp.beginPath(); cp.moveTo(x, y - 14); cp.quadraticCurveTo(x + Math.cos(a) * s * 0.6, y - 14 + Math.sin(a) * s * 0.6 - 6, x + Math.cos(a) * s, y - 14 + Math.sin(a) * s * 0.8); cp.stroke(); }
+      cp.fillStyle = '#5a3a1a'; cp.beginPath(); cp.arc(x, y - 14, 4, 0, Math.PI * 2); cp.fill();
+    } else {
+      cp.fillStyle = '#2e7d32'; cp.beginPath(); cp.arc(x, y - 12, s, 0, Math.PI * 2); cp.fill();
+      cp.fillStyle = '#3d9a40'; cp.beginPath(); cp.arc(x - s * 0.3, y - 16, s * 0.65, 0, Math.PI * 2); cp.fill();
+      cp.fillStyle = 'rgba(255,255,255,.08)'; cp.beginPath(); cp.arc(x - s * 0.4, y - 20, s * 0.35, 0, Math.PI * 2); cp.fill();
+    }
+    placed++;
+  }
+})();
+
+/* Minimap static layer */
+const mini = $('mini'), mctx = mini.getContext('2d');
+const miniBase = document.createElement('canvas'); miniBase.width = mini.width; miniBase.height = mini.height;
+(function(){
+  const m = miniBase.getContext('2d'), sx = mini.width / WW, sy = mini.height / WH;
+  m.fillStyle = '#3f8a38'; m.fillRect(0, 0, mini.width, mini.height);
+  m.fillStyle = '#555'; 
+  ROAD_ROWS.forEach(R => m.fillRect(0, R * T * sy, mini.width, 2 * T * sy));
+  ROAD_COLS.forEach(C => m.fillRect(C * T * sx, 0, 2 * T * sx, mini.height));
+  DECOR.forEach(b => { m.fillStyle = '#8a7a6a'; m.fillRect(b.x * T * sx, b.y * T * sy, b.w * T * sx, b.h * T * sy); });
+  BUILDINGS.forEach(b => { m.fillStyle = b.roof; m.fillRect(b.x * T * sx, b.y * T * sy, b.w * T * sx, b.h * T * sy); });
+})();
+
+/* =========================================================
+   STATE
+   ========================================================= */
+function newState(){
+  return {
+    v:1, money:2000000, bank:0, health:100, energy:100, rep:50,
+    day:1, minutes:7 * 60, edu:0, course:null, classes:0,
+    job:null, housing:0, maxHousing:0, rentDueDay:8, rentStrikes:0, levyDay:-99,
+    inv:{}, hasOkada:false, riding:false, nin:false,
+    daily:{}, news:[], priceMod:1,
+    px:B.home.frontX, py:B.home.frontY,
+    earned:0, shifts:0
+  };
+}
+let state = newState();
+const player = {x:state.px, y:state.py, dir:'d', anim:0, moving:false};
+
+function genNews(){
+  const pool = NEWS.slice(), out = [];
+  while (out.length < 3 && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  state.news = out.map(n => n.h);
+  state.priceMod = clamp(out.reduce((a, n) => a * n.mod, 1), 0.85, 1.35);
+}
+const price = base => Math.max(10, Math.round(base * state.priceMod / 10) * 10);
+const hour = () => Math.floor(state.minutes / 60) % 24;
+const inHours = (a, b) => hour() >= a && hour() < b;
+
+function saveGame(silent){
+  state.px = player.x; state.py = player.y;
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); if (!silent) toast('Game saved.', 'info'); }
+  catch (e) { if (!silent) toast('Could not save on this browser.', 'bad'); }
+}
+function loadGame(){
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    state = Object.assign(newState(), data);
+    player.x = state.px; player.y = state.py;
+    return true;
+  } catch (e) { return false; }
+}
+
+/* =========================================================
+   SYSTEMS
+   ========================================================= */
+function gain(stat, v){
+  if (stat === 'rep') state.rep = clamp(state.rep + v, 0, 100);
+  else state[stat] = clamp(state[stat] + v, 0, 100);
+}
+function spend(c){
+  if (state.money < c){ toast(`Not enough cash. You need ${fmt(c)}. Visit the bank.`, 'bad'); return false; }
+  state.money -= c; return true;
+}
+function advanceTime(mins){
+  state.minutes += mins;
+  while (state.minutes >= 1440){ state.minutes -= 1440; newDay(); }
+}
+function newDay(){
+  state.day++;
+  state.daily = {};
+  if (state.bank > 0) state.bank += state.bank * 0.0003;
+  genNews();
+  if (state.day >= state.rentDueDay){
+    const rent = HOUSING[state.housing].rent;
+    if (state.money >= rent){ state.money -= rent; paidRent(rent); }
+    else if (state.money + state.bank >= rent){ state.bank -= rent - state.money; state.money = 0; paidRent(rent); }
+    else {
+      state.rentStrikes++;
+      gain('rep', -8);
+      if (state.rentStrikes >= 3 && state.housing > 0){
+        state.housing = 0; state.rentStrikes = 0; state.rentDueDay = state.day + 7;
+        toast('Landlord don pack your load! You were moved back to a face-me-I-face-you room.', 'bad');
+      } else {
+        state.rentDueDay = state.day + 1;
+        toast(`Landlord is on your case! Rent of ${fmt(rent)} is unpaid. Strike ${state.rentStrikes}/3.`, 'bad');
+      }
+    }
+  }
+  toast(`${WEEKDAYS[(state.day - 1) % 7]}, Day ${state.day} begins.`, 'info');
+}
+function paidRent(rent){
+  state.rentStrikes = 0;
+  state.rentDueDay = state.day + 7;
+  toast(`Weekly rent paid: ${fmt(rent)}`, 'info');
+}
+function faint(){
+  const bill = 20000;
+  const fromWallet = Math.min(state.money, bill); state.money -= fromWallet;
+  const fromBank = Math.min(state.bank, bill - fromWallet); state.bank -= fromBank;
+  state.health = 45; state.energy = 40; gain('rep', -3);
+  player.x = B.hospital.frontX; player.y = B.hospital.frontY;
+  advanceTime(360);
+  toast('You collapsed from exhaustion! You woke up at General Hospital. Bill: ₦20,000', 'bad');
+  saveGame(true);
+}
+
+/* =========================================================
+   TOASTS
+   ========================================================= */
+function toast(msg, type){
+  const box = $('toasts');
+  const el = document.createElement('div');
+  el.className = 'toast ' + (type || '');
+  el.textContent = msg;
+  box.appendChild(el);
+  while (box.children.length > 4) box.removeChild(box.firstChild);
+  setTimeout(() => { el.style.transition = 'opacity .4s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 400); }, 3600);
+}
+
+/* =========================================================
+   PANELS (building interiors, menus, NPC talk)
+   ========================================================= */
+let panelState = null, paused = false;
+const opt = (label, note, action, why, extra) => ({label, note, action, why, cls: extra || ''});
+
+const PANELS = {
+  intro: () => ({
+    title: 'Welcome to My Naija Life 🇳🇬',
+    sub: 'You just landed in the city with ₦2,000,000 and big dreams.',
+    body: `<ul>
+      <li>Walk around with <b>WASD / Arrow keys</b> on PC, or drag the left side of the screen on mobile.</li>
+      <li>Stand at any building's door and press <b>E</b> (or tap the green button) to go inside.</li>
+      <li>Register your <b>NIN</b>, find a <b>job</b>, get <b>educated</b>, and build your <b>reputation</b>.</li>
+      <li>Watch your <b>health ❤️</b> and <b>energy ⚡</b>. Eat, sleep, and don't overwork yourself.</li>
+      <li>Rent of ${fmt(HOUSING[0].rent)} comes out every 7 days. Your game saves automatically.</li>
+    </ul>`,
+    options: [opt("Let's go! 🚀", 'Start your new life', () => { closePanel(); return false; })]
+  }),
+
+  home: () => {
+    const h = HOUSING[state.housing], hr = hour(), night = hr >= 18 || hr < 5;
+    return {
+      title: 'Your Home', sub: `${h.name} · Rent ${fmt(h.rent)}/week · Next rent: Day ${state.rentDueDay}`,
+      body: '',
+      options: [
+        opt('Sleep till morning 🌙', `Wake at 6:00 · +${h.sleep} energy`, () => {
+          advanceTime(hr >= 18 ? (1440 - state.minutes) + 360 : 360 - state.minutes);
+          gain('energy', h.sleep); gain('health', 10);
+          toast('You slept well. New day, new hustle!', 'good');
+        }, night ? null : 'You can only sleep for the night after 6pm.'),
+        opt('Take a nap 😴', '2 hours · +25 energy', () => { advanceTime(120); gain('energy', 25); toast('Short nap. You feel better.', 'good'); },
+          state.daily.naps >= 2 ? 'You have napped enough today.' : null),
+        opt('Eat from your bag 🎒', 'Open inventory', () => { openPanel('inventory'); return false; })
+      ].map((o, i) => { if (i === 1 && !o.why) { const a = o.action; o.action = () => { state.daily.naps = (state.daily.naps || 0) + 1; a(); }; } return o; })
+    };
+  },
+
+  mamaput: () => {
+    const open = inHours(7, 21);
+    const meals = [['Jollof Rice & Chicken', 3500, 35, 3], ['Amala, Ewedu & Assorted', 2500, 28, 2], ['Rice, Beans & Plantain', 1800, 22, 1], ['Eba & Egusi Soup', 2200, 26, 2]];
+    return {
+      title: "Mama Nkechi's Buka", sub: open ? 'Open 7am to 9pm. Hot food dey!' : 'Closed. Mama don go house. Opens 7am.',
+      body: state.priceMod > 1.04 ? '<i>Mama says: "Na the news o, prices don go up small today."</i>' : '',
+      options: meals.map(([n, b, e, hh]) => {
+        const c = price(b);
+        return opt(n, `${fmt(c)} · +${e} energy`, () => {
+          if (!spend(c)) return;
+          gain('energy', e); gain('health', hh); advanceTime(30);
+          toast(`You ate ${n}. E sweet die!`, 'good');
+        }, open ? null : 'The buka is closed right now.');
+      })
+    };
+  },
+
+  market: () => {
+    const open = inHours(6, 20);
+    return {
+      title: 'Oja Market', sub: open ? 'Open 6am to 8pm. Buy items to keep in your bag.' : 'Market has closed for today. Opens 6am.',
+      body: '',
+      options: MARKET_ITEMS.map(k => {
+        const it = ITEMS[k], c = price(it.price);
+        return opt(`Buy ${it.name}`, `${fmt(c)} · +${it.energy} energy · You have ${state.inv[k] || 0}`, () => {
+          if (!spend(c)) return;
+          state.inv[k] = (state.inv[k] || 0) + 1; advanceTime(5);
+          toast(`Bought ${it.name}.`, 'good');
+        }, open ? null : 'The market is closed.');
+      })
+    };
+  },
+
+  bank: () => {
+    const open = inHours(8, 16);
+    const why = !open ? 'Banking hall is open 8am to 4pm.' : !state.nin ? 'You need an NIN to bank. Register at the Local Govt Secretariat.' : null;
+    const amounts = [10000, 50000, 200000, 1000000];
+    const opts = [];
+    amounts.forEach(a => opts.push(opt(`Deposit ${fmt(a)}`, 'Move cash to savings', () => {
+      if (state.money < a) { toast('Not enough cash in your wallet.', 'bad'); return; }
+      state.money -= a; state.bank += a; toast(`Deposited ${fmt(a)}.`, 'good');
+    }, why)));
+    opts.push(opt('Deposit ALL cash', fmt(state.money), () => { state.bank += state.money; state.money = 0; toast('All cash deposited.', 'good'); }, why || (state.money <= 0 ? 'No cash to deposit.' : null)));
+    amounts.forEach(a => opts.push(opt(`Withdraw ${fmt(a)}`, 'Take cash out', () => {
+      if (state.bank < a) { toast('Insufficient balance.', 'bad'); return; }
+      state.bank -= a; state.money += a; toast(`Withdrew ${fmt(a)}.`, 'good');
+    }, why)));
+    opts.push(opt('Withdraw ALL', fmt(state.bank), () => { state.money += state.bank; state.bank = 0; toast('All savings withdrawn.', 'good'); }, why || (state.bank <= 0 ? 'Your account is empty.' : null)));
+    return {
+      title: 'Naija Trust Bank', sub: open ? 'Banking hall open 8am to 4pm · Savings earn about 11% per year' : 'Banking hall is closed. Opens 8am.',
+      body: `<div class="kv"><b>Wallet</b><span>${fmt(state.money)}</span><b>Savings</b><span>${fmt(state.bank)}</span><b>NIN</b><span>${state.nin ? 'Verified ✅' : 'Not registered ❌'}</span></div>`,
+      options: opts
+    };
+  },
+
+  hospital: () => ({
+    title: 'General Hospital', sub: 'Open 24 hours. Health is wealth.',
+    body: `<div class="kv"><b>Your health</b><span>${Math.round(state.health)}/100</span></div>`,
+    options: [
+      opt('Basic check-up 🩺', `${fmt(5000)} · +20 health · 1 hour`, () => { if (!spend(5000)) return; gain('health', 20); advanceTime(60); toast('Doctor says you are fine. Rest well.', 'good'); }, state.health >= 100 ? 'You are already in perfect health.' : null),
+      opt('Full treatment 🏥', `${fmt(25000)} · Health to 100 · 3 hours`, () => { if (!spend(25000)) return; state.health = 100; advanceTime(180); toast('Fully treated. You feel brand new!', 'good'); }, state.health >= 100 ? 'You are already in perfect health.' : null),
+      ...PHARM_ITEMS.map(k => { const it = ITEMS[k]; return opt(`Buy ${it.name} 💊`, `${fmt(it.price)} · +${it.health} health when used`, () => { if (!spend(it.price)) return; state.inv[k] = (state.inv[k] || 0) + 1; toast(`Bought ${it.name}.`, 'good'); }); })
+    ]
+  }),
+
+  school: () => {
+    const c = state.course ? COURSES.find(x => x.lvl === state.course) : null;
+    const opts = [];
+    if (c){
+      const why = state.daily.classDone ? 'You already attended class today. Come back tomorrow.' : !inHours(8, 15) ? 'Lectures hold 8am to 3pm.' : state.energy < 20 ? 'You are too tired for class. You need 20 energy.' : null;
+      opts.push(opt(`Attend class 📚`, `${c.name} · ${state.classes}/${c.classes} done · 5 hours · -20 energy`, () => {
+        state.daily.classDone = true; state.classes++; gain('energy', -20); advanceTime(300);
+        if (state.classes >= c.classes){
+          state.edu = c.lvl; state.course = null; state.classes = 0; gain('rep', 5);
+          toast(`🎓 Congratulations! You earned your ${EDU[c.lvl]} certificate!`, 'good');
+        } else toast(`Class done. ${c.classes - state.classes} more to go.`, 'good');
+      }, why));
+    } else {
+      COURSES.forEach(co => {
+        const done = state.edu >= co.lvl;
+        const why = done ? 'You already have this certificate.' : state.edu < co.lvl - 1 ? `You need ${EDU[co.lvl - 1]} first.` : null;
+        opts.push(opt(`Enroll: ${co.name}`, `${fmt(co.fee)} · ${co.classes} classes`, () => {
+          if (!spend(co.fee)) return;
+          state.course = co.lvl; state.classes = 0; toast(`Enrolled in ${co.name}. Attend one class per day.`, 'good');
+        }, why, done ? 'cur' : ''));
+      });
+    }
+    return {
+      title: 'Unity College & Polytechnic', sub: 'Education na key. One class per day, 8am to 3pm.',
+      body: `<div class="kv"><b>Highest certificate</b><span>${EDU[state.edu]}</span><b>Current course</b><span>${c ? `${c.name} (${state.classes}/${c.classes})` : 'None'}</span></div>`,
+      options: opts
+    };
+  },
+
+  jobs: () => {
+    const opts = [];
+    const j = state.job ? JOB[state.job] : null;
+    if (j){
+      const why = state.daily.worked ? 'You already worked a shift today.' : !inHours(6, 18) ? 'Shifts start between 6am and 6pm.' : state.energy < j.energy ? `You are too tired. You need ${j.energy} energy.` : (j.needsOkada && !state.hasOkada) ? 'You need an okada for this job.' : null;
+      opts.push(opt(`Work a shift 💼`, `${j.name} · Earn ${fmt(j.pay)} · ${j.hours} hrs · -${j.energy} energy`, () => {
+        state.daily.worked = true; gain('energy', -j.energy); advanceTime(j.hours * 60);
+        const bonus = Math.round(j.pay * (state.rep - 50) / 500);
+        const pay = j.pay + bonus;
+        state.money += pay; state.earned += pay; state.shifts++; gain('rep', 1);
+        toast(`Shift done! You earned ${fmt(pay)}${bonus > 0 ? ' (incl. reputation bonus)' : ''}.`, 'good');
+      }, why));
+      opts.push(opt('Resign 🚪', 'Quit your current job', () => { state.job = null; toast('You resigned.', 'info'); }));
+    }
+    JOBS.forEach(job => {
+      if (state.job === job.id) return;
+      const why = state.edu < job.edu ? `Requires ${EDU[job.edu]}.` : (job.needsOkada && !state.hasOkada) ? 'Requires your own okada (Oga Motors).' : (job.rep && state.rep < job.rep) ? `Requires ${job.rep} reputation.` : null;
+      opts.push(opt(`Apply: ${job.name}`, `${fmt(job.pay)}/shift · Needs ${EDU[job.edu]}${job.rep ? `, ${job.rep} rep` : ''}`, () => {
+        state.job = job.id; gain('rep', 1); toast(`You got the job: ${job.name}! Come back to work your shifts.`, 'good');
+      }, why));
+    });
+    return {
+      title: 'Lagos Business Hub', sub: 'Find work and clock in for your daily shift (6am to 6pm).',
+      body: `<div class="kv"><b>Current job</b><span>${j ? j.name : 'Unemployed'}</span><b>Shifts worked</b><span>${state.shifts}</span><b>Total earned</b><span>${fmt(state.earned)}</span></div>`,
+      options: opts
+    };
+  },
+
+  news: () => {
+    const bought = state.daily.paper;
+    return {
+      title: 'Newsstand', sub: 'Abeg buy paper, no be free reading!',
+      body: bought ? `<b>Today's headlines (Day ${state.day})</b><ul>${state.news.map(n => `<li>${n}</li>`).join('')}</ul><div style="margin-top:6px;opacity:.8">Food price index today: <b>${Math.round(state.priceMod * 100)}%</b></div>` : '',
+      options: [opt("Buy today's newspaper 📰", fmt(300), () => { if (!spend(300)) return; state.daily.paper = true; gain('rep', 0); toast('You bought the paper.', 'good'); }, bought ? 'You already have today\'s paper.' : null)]
+    };
+  },
+
+  lg: () => {
+    const open = inHours(8, 16);
+    const levyDue = state.day - state.levyDay >= 7;
+    return {
+      title: 'Local Government Secretariat', sub: open ? 'Civic centre open 8am to 4pm.' : 'Office is closed. Opens 8am.',
+      body: `<div class="kv"><b>NIN</b><span>${state.nin ? 'Registered ✅' : 'Not registered ❌'}</span><b>Development levy</b><span>${levyDue ? 'Due' : 'Paid this week ✅'}</span></div>`,
+      options: [
+        opt('Register NIN 🪪', 'Free · 2 hours · Required for banking', () => { state.nin = true; advanceTime(120); gain('rep', 5); toast('NIN registered! You can now use the bank.', 'good'); }, !open ? 'The office is closed.' : state.nin ? 'You already have an NIN.' : null),
+        opt('Pay development levy 🏛️', `${fmt(10000)} · Weekly · +3 rep`, () => { if (!spend(10000)) return; state.levyDay = state.day; gain('rep', 3); toast('Levy paid. Good citizen!', 'good'); }, !open ? 'The office is closed.' : !levyDue ? 'Already paid this week.' : null),
+        opt('Attend town hall meeting 🗣️', '2 hours · -10 energy · +2 rep', () => { state.daily.townhall = true; advanceTime(120); gain('energy', -10); gain('rep', 2); toast('You spoke at the town hall. People are noticing you.', 'good'); }, !inHours(10, 16) ? 'Town hall holds 10am to 4pm.' : state.daily.townhall ? 'Only one meeting per day.' : null)
+      ]
+    };
+  },
+
+  church: () => worship('church', 'Grace Assembly', 'Pray 🙏'),
+  mosque: () => worship('mosque', 'Central Mosque', 'Pray 🤲'),
+
+  estate: () => ({
+    title: 'Shelter Real Estate', sub: 'Move to a better place. You pay first week rent + 10% agent fee.',
+    body: `<div class="kv"><b>Current home</b><span>${HOUSING[state.housing].name}</span><b>Next rent</b><span>Day ${state.rentDueDay}</span></div>`,
+    options: HOUSING.map((h, i) => {
+      const cost = Math.round(h.rent * 1.1);
+      const cur = i === state.housing;
+      return opt(`${cur ? '✅ ' : ''}${h.name}`, `${fmt(h.rent)}/week · Sleep +${h.sleep} energy${cur ? ' · Current' : ` · Move-in ${fmt(cost)}`}`, () => {
+        if (!spend(cost)) return;
+        state.housing = i; state.rentDueDay = state.day + 7; state.rentStrikes = 0;
+        if (i > state.maxHousing){ gain('rep', h.rep); state.maxHousing = i; }
+        toast(`You moved into a ${h.name}!`, 'good');
+      }, cur ? 'You already live here.' : null, cur ? 'cur' : '');
+    })
+  }),
+
+  barber: () => ({
+    title: 'Kutz Barbing Salon', sub: 'Fresh cut, fresh confidence.',
+    body: '',
+    options: [
+      opt('Low cut ✂️', `${fmt(2500)} · +2 rep · 30 mins`, () => { if (!spend(2500)) return; state.daily.groomed = true; gain('rep', 2); advanceTime(30); toast('Sharp! You look clean.', 'good'); }, state.daily.groomed ? 'You already got groomed today.' : null),
+      opt('Full grooming 💈', `${fmt(6000)} · +4 rep · 1 hour`, () => { if (!spend(6000)) return; state.daily.groomed = true; gain('rep', 4); advanceTime(60); toast('Correct guy! Everybody dey look you.', 'good'); }, state.daily.groomed ? 'You already got groomed today.' : null)
+    ]
+  }),
+
+  motors: () => ({
+    title: 'Oga Motors', sub: 'Vehicles for every level of hustle.',
+    body: state.hasOkada ? `You own an okada. Use the menu (☰) to switch between riding and walking.` : '',
+    options: [
+      opt('Okada (Bajaj Boxer) 🏍️', `${fmt(850000)} · Faster movement · Unlocks Okada Rider job`, () => {
+        if (!spend(850000)) return;
+        state.hasOkada = true; state.riding = true; gain('rep', 2); toast('You bought an okada! You are now riding. Vroom!', 'good');
+      }, state.hasOkada ? 'You already own an okada.' : null),
+      opt('Keke Napep 🛺', `${fmt(2800000)}`, () => {}, 'Keke and commercial transport arrive in a future update.'),
+      opt('Toyota Corolla (2010) 🚗', `${fmt(9500000)}`, () => {}, 'Cars arrive in a future update.')
+    ]
+  }),
+
+  joint: () => {
+    const open = hour() >= 12 || hour() < 2;
+    return {
+      title: 'Chill Spot', sub: open ? 'Pepper soup, football and good vibes. Open 12pm to 2am.' : 'Closed. Opens 12pm.',
+      body: '',
+      options: [
+        opt('Watch football ⚽', `${fmt(1000)} · 2 hours · +10 energy`, () => { if (!spend(1000)) return; advanceTime(120); gain('energy', 10); toast(pick(['GOAL!!! The whole place scatter!', 'Na draw. Everybody vex.', 'Your team won! You dey happy.']), 'good'); }, open ? null : 'Chill Spot is closed.'),
+        opt('Pepper soup 🍲', `${fmt(price(3000))} · +20 energy`, () => { if (!spend(price(3000))) return; advanceTime(30); gain('energy', 20); toast('That pepper soup clear your eye!', 'good'); }, open ? null : 'Chill Spot is closed.'),
+        opt('Buy drinks for the boys 🍻', `${fmt(10000)} · +4 rep · -5 energy`, () => { if (!spend(10000)) return; state.daily.round = true; advanceTime(60); gain('rep', 4); gain('energy', -5); toast('Big man! Everybody dey hail you.', 'good'); }, !open ? 'Chill Spot is closed.' : state.daily.round ? 'You already bought a round today.' : null)
+      ]
+    };
+  },
+
+  npc: (n) => {
+    if (!panelState.line) panelState.line = pick(LINES);
+    return {
+      title: `${n.name}`, sub: n.role,
+      body: `<div style="font-size:15px">"${panelState.line}"</div>`,
+      options: [
+        opt('Greet 👋', '+1 rep (once per person, per day)', () => { n.greetDay = state.day; gain('rep', 1); panelState.line = pick(['Ehen! Good to see you.', 'Thank you, my person!', 'You too, safe journey.', 'God bless you.']); toast(`You greeted ${n.name}.`, 'good'); }, n.greetDay === state.day ? `You already greeted ${n.name} today.` : null),
+        opt('Ask for advice 💡', 'Get a life tip', () => { panelState.line = pick(TIPS); }),
+        opt('Bye 👋', 'Continue your day', () => { closePanel(); return false; })
+      ]
+    };
+  },
+
+  inventory: () => {
+    const keys = Object.keys(state.inv).filter(k => state.inv[k] > 0);
+    return {
+      title: 'Your Bag 🎒', sub: keys.length ? 'Tap an item to use it.' : 'Your bag is empty. Buy items at Oja Market or the hospital pharmacy.',
+      body: '',
+      options: keys.map(k => {
+        const it = ITEMS[k];
+        const fx = [it.energy ? `+${it.energy} energy` : '', it.health ? `+${it.health} health` : ''].filter(Boolean).join(' · ');
+        return opt(`Use ${it.name} ×${state.inv[k]}`, fx, () => {
+          state.inv[k]--; gain('energy', it.energy); gain('health', it.health);
+          toast(`Used ${it.name}.`, 'good');
+        });
+      })
+    };
+  },
+
+  menu: () => ({
+    title: 'Menu', sub: `Day ${state.day} · ${WEEKDAYS[(state.day - 1) % 7]}`,
+    body: '',
+    options: [
+      opt('Profile 👤', 'Your life at a glance', () => { openPanel('profile'); return false; }),
+      opt('Bag 🎒', 'Use food and medicine', () => { openPanel('inventory'); return false; }),
+      opt(state.riding ? 'Get off okada 🚶' : 'Ride okada 🏍️', state.hasOkada ? 'Switch movement mode' : 'Buy one at Oga Motors', () => { state.riding = !state.riding; toast(state.riding ? 'You are riding your okada.' : 'You are walking.', 'info'); }, state.hasOkada ? null : 'You do not own an okada yet.'),
+      opt('Save game 💾', 'Also saves automatically', () => { saveGame(); }),
+      opt('Full screen ⛶', 'Better on mobile', () => { goFullscreen(); }),
+      opt('How to play ❓', 'Controls and tips', () => { openPanel('intro'); return false; }),
+      opt('Start new life 🔄', 'Erases your current save', () => { openPanel('confirmReset'); return false; })
+    ]
+  }),
+
+  profile: () => {
+    const j = state.job ? JOB[state.job] : null;
+    return {
+      title: 'Your Profile 👤', sub: 'Life in the city so far',
+      body: `<div class="kv">
+        <b>Wallet</b><span>${fmt(state.money)}</span>
+        <b>Bank savings</b><span>${fmt(state.bank)}</span>
+        <b>Net worth</b><span>${fmt(state.money + state.bank + (state.hasOkada ? 600000 : 0))}</span>
+        <b>Health / Energy</b><span>${Math.round(state.health)} / ${Math.round(state.energy)}</span>
+        <b>Reputation</b><span>${Math.round(state.rep)}/100</span>
+        <b>Education</b><span>${EDU[state.edu]}${state.course ? ' (studying)' : ''}</span>
+        <b>Job</b><span>${j ? j.name : 'Unemployed'}</span>
+        <b>Home</b><span>${HOUSING[state.housing].name}</span>
+        <b>Next rent</b><span>Day ${state.rentDueDay} · ${fmt(HOUSING[state.housing].rent)}</span>
+        <b>NIN</b><span>${state.nin ? 'Registered' : 'Not registered'}</span>
+        <b>Vehicle</b><span>${state.hasOkada ? 'Okada' : 'None'}</span>
+        <b>Shifts worked</b><span>${state.shifts} · Earned ${fmt(state.earned)}</span>
+      </div>`,
+      options: [opt('Back', 'Return to menu', () => { openPanel('menu'); return false; })]
+    };
+  },
+
+  confirmReset: () => ({
+    title: 'Start a new life?', sub: 'This deletes your current progress. It cannot be undone.',
+    body: '',
+    options: [
+      opt('Yes, start over', 'Fresh start with ₦2,000,000', () => {
+        try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+        state = newState(); genNews(); player.x = state.px; player.y = state.py;
+        npcs.forEach(n => n.greetDay = 0);
+        openPanel('intro'); return false;
+      }),
+      opt('No, go back', '', () => { openPanel('menu'); return false; })
+    ]
+  })
+};
+
+function worship(id, name, prayLabel){
+  const key = 'pray_' + id, offKey = 'off_' + id;
+  return {
+    title: name, sub: 'A place of peace in the busy city.',
+    body: '',
+    options: [
+      opt(prayLabel, '1 hour · +1 rep · +5 energy', () => { state.daily[key] = true; advanceTime(60); gain('rep', 1); gain('energy', 5); toast('You feel at peace.', 'good'); }, state.daily[key] ? 'You already prayed here today.' : null),
+      opt('Give an offering 💝', `${fmt(2000)} · +2 rep`, () => { if (!spend(2000)) return; state.daily[offKey] = true; gain('rep', 2); toast('God bless you!', 'good'); }, state.daily[offKey] ? 'You already gave today.' : null)
+    ]
+  };
+}
+
+const pTitle = $('pTitle'), pSub = $('pSub'), pBody = $('pBody'), pOpts = $('pOpts'), panelEl = $('panel');
+function openPanel(kind, data){
+  panelState = {kind, data};
+  paused = true;
+  renderPanel();
+  panelEl.classList.add('show');
+  resetJoy();
+}
+function closePanel(){
+  panelEl.classList.remove('show');
+  panelState = null; paused = false;
+  saveGame(true);
+}
+function renderPanel(){
+  if (!panelState) return;
+  const p = PANELS[panelState.kind](panelState.data);
+  pTitle.textContent = p.title;
+  pSub.textContent = p.sub || '';
+  pBody.innerHTML = p.body || '';
+  pOpts.innerHTML = '';
+  p.options.forEach(o => {
+    const b = document.createElement('button');
+    b.className = 'opt' + (o.why ? ' dis' : '') + (o.cls ? ' ' + o.cls : '');
+    b.innerHTML = `<b>${o.label}</b>${o.note ? `<span>${o.note}</span>` : ''}`;
+    b.addEventListener('click', () => {
+      if (o.why){ toast(o.why, 'bad'); return; }
+      const r = o.action();
+      updateHUD();
+      if (r !== false && panelState) renderPanel();
+      saveGame(true);
+    });
+    pOpts.appendChild(b);
+  });
+}
+$('pClose').addEventListener('click', closePanel);
+panelEl.addEventListener('click', e => { if (e.target === panelEl) closePanel(); });
+$('menuBtn').addEventListener('click', () => { if (panelState) closePanel(); else openPanel('menu'); });
+
+function goFullscreen(){
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (req){
+    Promise.resolve(req.call(el)).then(() => {
+      try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch (e) {}
+    }).catch(() => toast('Full screen is not available on this browser.', 'bad'));
+  } else toast('Full screen is not available on this browser.', 'bad');
+}
+
+/* =========================================================
+   NPCs AND TRAFFIC
+   ========================================================= */
+const SKINS = ['#5a3825','#6b4226','#7a4b2a','#4a2e1c','#8d5a36','#3e2616'];
+const SHIRTS = ['#e74c3c','#3498db','#9b59b6','#f39c12','#1abc9c','#e67e22','#ecf0f1','#d35400','#16a085','#c0392b','#2c3e50','#f1c40f'];
+
+function randomWalkTile(nearX, nearY){
+  for (let i = 0; i < 30; i++){
+    let c, r;
+    if (nearX !== undefined){ c = Math.floor(nearX / T) + Math.floor((Math.random() - 0.5) * 16); r = Math.floor(nearY / T) + Math.floor((Math.random() - 0.5) * 16); }
+    else { c = Math.floor(Math.random() * COLS); r = Math.floor(Math.random() * ROWS); }
+    if (c < 0 || r < 0 || c >= COLS || r >= ROWS) continue;
+    if (!(isRoad(c, r) || nearRoad(c, r))) continue;
+    const x = (c + 0.5) * T, y = (r + 0.5) * T;
+    if (free(x, y, 10)) return {x, y};
+  }
+  return {x: B.home.frontX, y: B.home.frontY};
+}
+
+function free(x, y, rad){
+  const r = rad || 11;
+  if (x - r < 0 || y - r < 0 || x + r > WW || y + r > WH) return false;
+  for (const s of SOLIDS){
+    const cx = clamp(x, s.x, s.x + s.w), cy = clamp(y, s.y, s.y + s.h);
+    if ((x - cx) * (x - cx) + (y - cy) * (y - cy) < r * r) return false;
+  }
+  return true;
+}
+
+const npcs = NPC_NAMES.map((name, i) => {
+  const p = randomWalkTile();
+  const n = {name, role:NPC_ROLES[i], x:p.x, y:p.y, tx:p.x, ty:p.y, speed:45 + Math.random() * 30, wait:Math.random() * 3,
+    shirt:SHIRTS[i % SHIRTS.length], skin:pick(SKINS), pants:pick(['#2c3e50','#34495e','#5d4037','#1b2631']), dir:'d', anim:0, moving:false, greetDay:0};
+  const t = randomWalkTile(n.x, n.y); n.tx = t.x; n.ty = t.y;
+  return n;
+});
+
+const cars = [];
+(function spawnCars(){
+  const colors = ['#f1c40f','#f1c40f','#e74c3c','#ecf0f1','#2c3e50','#3498db','#7f8c8d'];
+  ROAD_ROWS.forEach(R => {
+    [[R + 0.5, -1], [R + 1.5, 1]].forEach(([lane, dir]) => {
+      for (let k = 0; k < 2; k++) cars.push({axis:'h', x:Math.random() * WW, y:lane * T, dir, speed:90 + Math.random() * 70, color:pick(colors)});
+    });
+  });
+  ROAD_COLS.forEach(C => {
+    [[C + 0.5, 1], [C + 1.5, -1]].forEach(([lane, dir]) => {
+      cars.push({axis:'v', x:lane * T, y:Math.random() * WH, dir, speed:90 + Math.random() * 70, color:pick(colors)});
+    });
+  });
+})();
+
+/* =========================================================
+   INPUT
+   ========================================================= */
+const keys = new Set();
+window.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
+  if (k === 'escape'){ if (panelState) closePanel(); else openPanel('menu'); return; }
+  if (panelState) return;
+  if (k === 'e' || k === 'enter' || k === ' ') { interact(); return; }
+  if (k === 'm') { openPanel('menu'); return; }
+  if (k === 'i') { openPanel('inventory'); return; }
+  keys.add(k);
+});
+window.addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+window.addEventListener('blur', () => keys.clear());
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+const joy = {id:null, ox:0, oy:0, dx:0, dy:0, active:false};
+const joyEl = $('joy'), knob = $('knob'), ghost = $('joyGhost');
+function resetJoy(){ joy.id = null; joy.active = false; joy.dx = joy.dy = 0; joyEl.style.display = 'none'; knob.style.transform = ''; if (isTouch) ghost.style.display = 'flex'; }
+canvas.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'mouse' || paused || joy.id !== null) return;
+  if (e.clientX > vw * 0.6) return;
+  joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; joy.active = true; joy.dx = joy.dy = 0;
+  joyEl.style.left = joy.ox + 'px'; joyEl.style.top = joy.oy + 'px'; joyEl.style.display = 'block'; ghost.style.display = 'none';
+});
+window.addEventListener('pointermove', e => {
+  if (e.pointerId !== joy.id) return;
+  let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy;
+  const d = Math.hypot(dx, dy), R = 50;
+  if (d > R){ dx = dx / d * R; dy = dy / d * R; }
+  joy.dx = dx / R; joy.dy = dy / R;
+  knob.style.transform = `translate(${dx}px,${dy}px)`;
+});
+['pointerup','pointercancel'].forEach(ev => window.addEventListener(ev, e => { if (e.pointerId === joy.id) resetJoy(); }));
+
+const actBtn = $('actBtn'), hintEl = $('hint');
+actBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); interact(); });
+if (isTouch){ actBtn.style.display = 'block'; ghost.style.display = 'flex'; }
+
+let target = null;
+function findTarget(){
+  let best = null, bd = Infinity;
+  BUILDINGS.forEach(b => {
+    const d = Math.hypot(player.x - b.frontX, player.y - b.frontY);
+    if (d < T * 0.95 && d < bd){ bd = d; best = {type:'b', b}; }
+  });
+  npcs.forEach(n => {
+    const d = Math.hypot(player.x - n.x, player.y - n.y);
+    if (d < 46 && d < bd){ bd = d; best = {type:'n', n}; }
+  });
+  return best;
+}
+function interact(){
+  if (paused || !target) return;
+  if (target.type === 'b') openPanel(target.b.id);
+  else { target.n.wait = 6; openPanel('npc', target.n); }
+}
+
+/* =========================================================
+   UPDATE
+   ========================================================= */
+let lastTarget = '';
+function update(dt){
+  if (paused) return;
+  let mx = 0, my = 0;
+  if (keys.has('arrowleft') || keys.has('a')) mx -= 1;
+  if (keys.has('arrowright') || keys.has('d')) mx += 1;
+  if (keys.has('arrowup') || keys.has('w')) my -= 1;
+  if (keys.has('arrowdown') || keys.has('s')) my += 1;
+  if (joy.active){ mx += joy.dx; my += joy.dy; }
+  const len = Math.hypot(mx, my);
+  player.moving = false;
+  if (len > 0.18){
+    const n = len > 1 ? len : 1; mx /= n; my /= n;
+    const sp = (state.riding ? 270 : 150) * (state.energy <= 5 ? 0.55 : 1);
+    const nx = player.x + mx * sp * dt, ny = player.y + my * sp * dt;
+    if (free(nx, player.y)) player.x = nx;
+    if (free(player.x, ny)) player.y = ny;
+    player.moving = true; player.anim += dt * 11;
+    if (Math.abs(mx) > Math.abs(my)) player.dir = mx > 0 ? 'r' : 'l'; else player.dir = my > 0 ? 'd' : 'u';
+  }
+
+  const gm = dt * TIME_SCALE;
+  advanceTime(gm);
+  const drain = 0.03 + (player.moving ? (state.riding ? 0.025 : 0.065) : 0);
+  state.energy = clamp(state.energy - gm * drain, 0, 100);
+  if (state.energy <= 0) state.health = clamp(state.health - gm * 0.25, 0, 100);
+  else if (state.energy > 60) state.health = clamp(state.health + gm * 0.008, 0, 100);
+  if (state.health <= 0) faint();
+
+  npcs.forEach(n => {
+    n.moving = false;
+    if (n.wait > 0){ n.wait -= dt; return; }
+    const dx = n.tx - n.x, dy = n.ty - n.y, d = Math.hypot(dx, dy);
+    if (d < 4){ n.wait = 1 + Math.random() * 4; const t = randomWalkTile(n.x, n.y); n.tx = t.x; n.ty = t.y; return; }
+    const step = n.speed * dt, nx = n.x + dx / d * step, ny = n.y + dy / d * step;
+    if (free(nx, ny, 10)){
+      n.x = nx; n.y = ny; n.moving = true; n.anim += dt * 9;
+      if (Math.abs(dx) > Math.abs(dy)) n.dir = dx > 0 ? 'r' : 'l'; else n.dir = dy > 0 ? 'd' : 'u';
+    } else { const t = randomWalkTile(n.x, n.y); n.tx = t.x; n.ty = t.y; }
+  });
+
+  cars.forEach(c => {
+    if (c.axis === 'h'){ c.x += c.dir * c.speed * dt; if (c.x > WW + 80) c.x = -80; if (c.x < -80) c.x = WW + 80; }
+    else { c.y += c.dir * c.speed * dt; if (c.y > WH + 80) c.y = -80; if (c.y < -80) c.y = WH + 80; }
+  });
+
+  target = findTarget();
+  const label = target ? (target.type === 'b' ? `Enter ${target.b.name}` : `Talk to ${target.n.name}`) : '';
+  if (label !== lastTarget){
+    lastTarget = label;
+    if (label){ hintEl.textContent = isTouch ? `Tap the button: ${label}` : `Press E: ${label}`; hintEl.style.display = 'block'; }
+    else hintEl.style.display = 'none';
+    actBtn.textContent = target ? (target.type === 'b' ? 'ENTER' : 'TALK') : '•';
+    actBtn.classList.toggle('dim', !target);
+  }
+}
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+function rr(x, y, w, h, r){ ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
+function darkness(){
+  const m = state.minutes / 60;
+  if (m >= 6 && m < 18) return 0;
+  if (m >= 18 && m < 20) return (m - 18) / 2 * 0.5;
+  if (m >= 20 || m < 5) return 0.5;
+  return (6 - m) * 0.5;
+}
+
+function drawBuilding(b, dark){
+  const x = b.x * T, y = b.y * T, w = b.w * T, h = b.h * T, roofH = Math.min(h * 0.38, 70);
+  ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(x + 7, y + 9, w, h);
+  ctx.fillStyle = b.color; ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = b.roof; ctx.fillRect(x - 4, y - 4, w + 8, roofH + 4);
+  ctx.fillStyle = 'rgba(255,255,255,.13)'; ctx.fillRect(x - 4, y - 4, w + 8, 6);
+  ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.fillRect(x - 4, y + roofH - 4, w + 8, 4);
+  const lit = dark > 0.15;
+  for (let wy = y + roofH + 10; wy < y + h - 40; wy += 30){
+    for (let wx = x + 12; wx < x + w - 26; wx += 34){
+      if (wx + 18 > b.doorC * T && wx < (b.doorC + 1) * T) continue;
+      ctx.fillStyle = lit ? (hash(wx, wy) > 0.3 ? '#ffd56b' : '#2b3b4a') : '#9fd3e6';
+      ctx.fillRect(wx, wy, 18, 16);
+      ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(wx, wy + 14, 18, 2);
+    }
+  }
+  const dx = b.doorC * T + 8;
+  ctx.fillStyle = '#4a2c17'; ctx.fillRect(dx, y + h - 32, T - 16, 32);
+  ctx.fillStyle = lit && b.name ? '#ffd56b' : '#d9b36b'; ctx.fillRect(dx + T - 24, y + h - 17, 3, 3);
+  if (b.name){
+    let fs = 13; ctx.font = `800 ${fs}px system-ui,sans-serif`;
+    while (ctx.measureText(b.name).width > w - 6 && fs > 8){ fs--; ctx.font = `800 ${fs}px system-ui,sans-serif`; }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.6)';
+    ctx.strokeText(b.name, x + w / 2, y + roofH / 2);
+    ctx.fillStyle = '#fff'; ctx.fillText(b.name, x + w / 2, y + roofH / 2);
+  }
+}
+
+function drawCar(c){
+  ctx.save();
+  ctx.translate(c.x, c.y);
+  if (c.axis === 'v') ctx.rotate(Math.PI / 2);
+  if (c.dir < 0) ctx.scale(-1, 1);
+  ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(-24, -9, 52, 24);
+  ctx.fillStyle = c.color; rr(-26, -12, 52, 24, 6); ctx.fill();
+  if (c.color === '#f1c40f'){ ctx.fillStyle = '#111'; ctx.fillRect(-26, -2, 52, 4); }
+  ctx.fillStyle = 'rgba(30,50,70,.85)'; ctx.fillRect(4, -9, 12, 18); ctx.fillRect(-18, -9, 8, 18);
+  ctx.fillStyle = '#fff6b0'; ctx.fillRect(24, -10, 3, 5); ctx.fillRect(24, 5, 3, 5);
+  ctx.restore();
+}
+
+function drawPerson(p, o){
+  const x = p.x, y = p.y, sw = p.moving ? Math.sin(p.anim) * 3 : 0;
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(x, y + 14, 11, 4, 0, 0, Math.PI * 2); ctx.fill();
+  if (o.okada){
+    ctx.fillStyle = '#111';
+    const horiz = p.dir === 'l' || p.dir === 'r';
+    if (horiz){ ctx.beginPath(); ctx.arc(x - 13, y + 10, 6, 0, Math.PI * 2); ctx.arc(x + 13, y + 10, 6, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#c0392b'; rr(x - 15, y, 30, 8, 3); ctx.fill(); }
+    else { ctx.fillRect(x - 3, y - 4, 6, 26); ctx.fillStyle = '#c0392b'; rr(x - 7, y + 2, 14, 12, 3); ctx.fill(); }
+  } else {
+    ctx.fillStyle = o.pants;
+    ctx.fillRect(x - 6, y + 2 + sw, 5, 11); ctx.fillRect(x + 1, y + 2 - sw, 5, 11);
+  }
+  ctx.fillStyle = o.shirt; rr(x - 9, y - 10, 18, 16, 5); ctx.fill();
+  if (o.stripe){ ctx.fillStyle = '#fff'; ctx.fillRect(x - 2, y - 10, 4, 16); }
+  ctx.fillStyle = o.skin; ctx.beginPath(); ctx.arc(x, y - 16, 8, 0, Math.PI * 2); ctx.fill();
+  if (o.okada){ ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(x, y - 18, 8.5, Math.PI, 0); ctx.fill(); }
+  else { ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(x, y - 18, 7.5, Math.PI, 0); ctx.fill(); }
+  if (p.dir !== 'u'){
+    ctx.fillStyle = '#fff';
+    const ex = p.dir === 'l' ? -3 : p.dir === 'r' ? 3 : 0;
+    ctx.fillRect(x - 4 + ex, y - 17, 2.5, 2.5); ctx.fillRect(x + 2 + ex, y - 17, 2.5, 2.5);
+  }
+}
+
+function render(t){
+  const offX = vw > WW ? (vw - WW) / 2 : 0, offY = vh > WH ? (vh - WH) / 2 : 0;
+  const camX = clamp(player.x - vw / 2, 0, Math.max(0, WW - vw)), camY = clamp(player.y - vh / 2, 0, Math.max(0, WH - vh));
+  ctx.fillStyle = '#0d1b12'; ctx.fillRect(0, 0, vw, vh);
+  ctx.save();
+  ctx.translate(Math.round(offX - camX), Math.round(offY - camY));
+  ctx.drawImage(ground, 0, 0);
+  const dark = darkness();
+  const inView = (x, y, w, h) => x + w > camX - 60 && x < camX + vw + 60 && y + h > camY - 60 && y < camY + vh + 60;
+
+  [...DECOR, ...BUILDINGS].forEach(b => { if (inView(b.x * T, b.y * T, b.w * T, b.h * T)) drawBuilding(b, dark); });
+
+  const ents = npcs.filter(n => inView(n.x - 20, n.y - 30, 40, 50)).map(n => ({p:n, o:{shirt:n.shirt, skin:n.skin, pants:n.pants}}));
+  ents.push({p:player, o:{shirt:'#0b8a4a', stripe:true, skin:'#6b4226', pants:'#1b2631', okada:state.riding}});
+  ents.sort((a, b) => a.p.y - b.p.y).forEach(e => drawPerson(e.p, e.o));
+
+  cars.forEach(c => { if (inView(c.x - 30, c.y - 30, 60, 60)) drawCar(c); });
+  ctx.drawImage(canopy, 0, 0);
+
+  // name tags
+  ctx.font = '700 11px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  npcs.forEach(n => {
+    if (Math.hypot(player.x - n.x, player.y - n.y) < 130){
+      const w = ctx.measureText(n.name).width + 10;
+      ctx.fillStyle = 'rgba(0,0,0,.55)'; rr(n.x - w / 2, n.y - 40, w, 15, 7); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.fillText(n.name, n.x, n.y - 32.5);
+    }
+  });
+
+  // target marker
+  if (target){
+    const tx = target.type === 'b' ? target.b.frontX : target.n.x;
+    const ty = (target.type === 'b' ? target.b.frontY - 34 : target.n.y - 50) + Math.sin(t / 180) * 4;
+    ctx.fillStyle = '#7dffa8'; ctx.beginPath(); ctx.moveTo(tx - 8, ty - 8); ctx.lineTo(tx + 8, ty - 8); ctx.lineTo(tx, ty + 2); ctx.closePath(); ctx.fill();
+  }
+
+  // night lights
+  if (dark > 0){
+    ctx.fillStyle = `rgba(8,12,40,${dark})`; ctx.fillRect(camX - 10, camY - 10, vw + 20, vh + 20);
+    ctx.globalCompositeOperation = 'lighter';
+    const glow = (gx, gy, r, a) => { const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, r); g.addColorStop(0, `rgba(255,200,90,${a})`); g.addColorStop(1, 'rgba(255,200,90,0)'); ctx.fillStyle = g; ctx.fillRect(gx - r, gy - r, r * 2, r * 2); };
+    BUILDINGS.forEach(b => { if (inView(b.frontX - 80, b.frontY - 80, 160, 160)) glow(b.frontX, b.frontY - 14, 70, dark * 0.45); });
+    cars.forEach(c => { if (inView(c.x - 60, c.y - 60, 120, 120)){ const fx = c.axis === 'h' ? c.x + c.dir * 40 : c.x, fy = c.axis === 'v' ? c.y + c.dir * 40 : c.y; glow(fx, fy, 40, dark * 0.5); } });
+    glow(player.x, player.y - 6, 60, dark * 0.25);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  ctx.restore();
+
+  // minimap
+  mctx.drawImage(miniBase, 0, 0);
+  const sx = mini.width / WW, sy = mini.height / WH;
+  mctx.fillStyle = '#ffd23f'; npcs.forEach(n => mctx.fillRect(n.x * sx - 1.5, n.y * sy - 1.5, 3, 3));
+  mctx.strokeStyle = 'rgba(255,255,255,.7)'; mctx.lineWidth = 2; mctx.strokeRect(camX * sx, camY * sy, vw * sx, vh * sy);
+  mctx.fillStyle = '#fff'; mctx.beginPath(); mctx.arc(player.x * sx, player.y * sy, 5, 0, Math.PI * 2); mctx.fill();
+  mctx.fillStyle = '#0b8a4a'; mctx.beginPath(); mctx.arc(player.x * sx, player.y * sy, 3, 0, Math.PI * 2); mctx.fill();
+}
+
+/* =========================================================
+   HUD
+   ========================================================= */
+const hud = {money:$('hMoney'), bank:$('hBank'), time:$('hTime'), day:$('hDay'), job:$('hJob'),
+  bh:$('bHealth'), be:$('bEnergy'), br:$('bRep'), nh:$('nHealth'), ne:$('nEnergy'), nr:$('nRep')};
+function updateHUD(){
+  hud.money.textContent = fmt(state.money);
+  hud.bank.textContent = 'Bank: ' + fmt(state.bank);
+  const m = Math.floor(state.minutes), hh = Math.floor(m / 60), mm = m % 60;
+  hud.time.textContent = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+  hud.day.textContent = `${WEEKDAYS[(state.day - 1) % 7]} · Day ${state.day}`;
+  hud.job.textContent = state.job ? JOB[state.job].name : 'Unemployed';
+  hud.bh.style.width = state.health + '%'; hud.be.style.width = state.energy + '%'; hud.br.style.width = state.rep + '%';
+  hud.nh.textContent = Math.round(state.health); hud.ne.textContent = Math.round(state.energy); hud.nr.textContent = Math.round(state.rep);
+  hud.be.style.background = state.energy < 20 ? '#ff8a3d' : '#ffd23f';
+}
+
+/* =========================================================
+   MAIN LOOP
+   ========================================================= */
+let last = performance.now(), hudTimer = 0, saveTimer = 0, warnTimer = 0;
+function loop(now){
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  update(dt);
+  render(now);
+  hudTimer += dt; saveTimer += dt; warnTimer += dt;
+  if (hudTimer > 0.2){ hudTimer = 0; updateHUD(); }
+  if (saveTimer > 30 && !paused){ saveTimer = 0; saveGame(true); }
+  if (warnTimer > 25 && !paused){
+    warnTimer = 0;
+    if (state.energy < 15) toast('You are very tired. Eat something or go home to rest.', 'bad');
+    else if (state.health < 30) toast('Your health is low. Visit the hospital.', 'bad');
+  }
+  requestAnimationFrame(loop);
+}
+
+/* =========================================================
+   BOOT
+   ========================================================= */
+const hadSave = loadGame();
+if (!hadSave || !state.news.length) genNews();
+updateHUD();
+if (!hadSave) openPanel('intro');
+else toast(`Welcome back! ${WEEKDAYS[(state.day - 1) % 7]}, Day ${state.day}.`, 'info');
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveGame(true); });
+requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>

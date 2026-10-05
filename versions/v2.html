@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b6e3a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="My Naija Life">
+<title>My Naija Life</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#0d1b12;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#fff;touch-action:none;overscroll-behavior:none}
+canvas#game{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+
+#hudWrap{position:fixed;top:max(8px,env(safe-area-inset-top));left:max(8px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:6px;pointer-events:none;z-index:5;max-width:calc(100vw - 190px)}
+#hud{display:flex;gap:6px;align-items:stretch;flex-wrap:wrap}
+.card{background:rgba(10,22,15,.84);border:1px solid rgba(255,255,255,.13);border-radius:12px;padding:6px 10px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.lbl{font-size:10px;letter-spacing:.06em;text-transform:uppercase;opacity:.7}
+.big{font-size:17px;font-weight:800;line-height:1.15}
+.small{font-size:11px;opacity:.85;text-transform:none;letter-spacing:0}
+#hMoney{color:#7dffa8}
+.row{display:flex;align-items:center;gap:5px;font-size:11px;height:14px}
+.row span{width:16px;text-align:center}
+.bar{width:88px;height:7px;background:rgba(255,255,255,.14);border-radius:4px;overflow:hidden}
+.bar>i{display:block;height:100%;width:50%;border-radius:4px;transition:width .25s}
+#bHealth{background:#ff5a5a}#bEnergy{background:#ffd23f}#bFood{background:#ff9f43}#bRep{background:#5ab4ff}
+.num{width:24px;text-align:right;opacity:.85;font-variant-numeric:tabular-nums}
+#hHeat{color:#ff6b6b;font-weight:700;display:none}
+#goal{display:flex;gap:6px;align-items:flex-start;font-size:12px;line-height:1.35;max-width:420px;border-color:rgba(255,210,63,.45)}
+#goal b{color:#ffd23f}
+
+#topRight{position:fixed;top:max(8px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right));display:flex;flex-direction:column;align-items:flex-end;gap:6px;z-index:6}
+.tbtns{display:flex;gap:6px}
+.tbtn{pointer-events:auto;width:40px;height:40px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(10,22,15,.84);color:#fff;font-size:18px;cursor:pointer}
+#mini{width:150px;height:100px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:#1d3a24;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+
+#hint{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);background:rgba(10,22,15,.88);border:1px solid rgba(125,255,168,.4);padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap;display:none;z-index:5;pointer-events:none}
+#actBtn{position:fixed;right:max(22px,env(safe-area-inset-right));bottom:max(22px,env(safe-area-inset-bottom));width:78px;height:78px;border-radius:50%;border:3px solid rgba(255,255,255,.55);background:rgba(11,138,74,.85);color:#fff;font-weight:800;font-size:14px;display:none;z-index:6;touch-action:none;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+#actBtn.dim{background:rgba(40,60,48,.6);border-color:rgba(255,255,255,.25)}
+
+#joy{position:fixed;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.28);z-index:4;pointer-events:none;display:none}
+#knob{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:rgba(255,255,255,.45)}
+#joyGhost{position:fixed;left:max(40px,env(safe-area-inset-left));bottom:max(40px,env(safe-area-inset-bottom));width:110px;height:110px;border-radius:50%;border:2px dashed rgba(255,255,255,.25);display:none;align-items:center;justify-content:center;font-size:11px;opacity:.7;text-align:center;z-index:3;pointer-events:none}
+
+#toasts{position:fixed;bottom:64px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;z-index:20;pointer-events:none;width:min(92vw,520px)}
+.toast{background:rgba(10,22,15,.94);border-left:4px solid #7dffa8;padding:8px 14px;border-radius:10px;font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,.35);animation:tin .25s ease-out;text-align:center}
+.toast.bad{border-left-color:#ff5a5a}.toast.info{border-left-color:#5ab4ff}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+#panel{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:30;padding:10px}
+#panel.show{display:flex}
+.box{position:relative;width:min(640px,96vw);max-height:92vh;overflow:auto;background:linear-gradient(180deg,#143023,#0f2219);border:1px solid rgba(125,255,168,.25);border-radius:16px;padding:16px 16px 14px;box-shadow:0 18px 50px rgba(0,0,0,.5);touch-action:pan-y}
+#pClose{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;font-size:18px;cursor:pointer}
+#pTitle{font-size:20px;font-weight:800;padding-right:40px}
+#pSub{font-size:12.5px;opacity:.8;margin-top:3px;padding-right:40px}
+#pSub:empty{display:none}
+#pBody{font-size:13px;line-height:1.5;margin-top:10px}
+#pBody:empty{display:none}
+#pBody p{margin-bottom:6px}
+#pBody .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px}
+#pBody .kv b{opacity:.7;font-weight:600}
+#pBody ul,#pBody ol{padding-left:18px}
+#pBody li{margin-bottom:3px}
+#pBody .note{margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(255,210,63,.1);border:1px solid rgba(255,210,63,.3);font-size:12.5px}
+#pBody .warn{margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(255,90,90,.12);border:1px solid rgba(255,90,90,.35);font-size:12.5px}
+.qtext{font-size:17px;font-weight:700;line-height:1.4}
+#pOpts{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin-top:12px}
+.opt{text-align:left;padding:10px 12px;border-radius:11px;border:1px solid rgba(125,255,168,.3);background:rgba(11,138,74,.22);color:#fff;cursor:pointer;font-size:13.5px;line-height:1.3}
+.opt:active{transform:scale(.98)}
+.opt span{display:block;font-size:11.5px;opacity:.75;margin-top:2px}
+.opt.dis{opacity:.45;border-color:rgba(255,255,255,.15);background:rgba(255,255,255,.04)}
+.opt.cur{border-color:#ffd23f;background:rgba(255,210,63,.15)}
+.opt.hint{border-color:#5ab4ff;background:rgba(90,180,255,.15)}
+.opt.danger{border-color:rgba(255,90,90,.6);background:rgba(255,90,90,.15)}
+
+#rotate,#noThree{position:fixed;inset:0;background:#0b6e3a;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:100;text-align:center;padding:24px}
+#rotate .ph{width:54px;height:90px;border:4px solid #fff;border-radius:10px;animation:rot 1.8s ease-in-out infinite}
+@keyframes rot{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(90deg)}}
+@media (orientation:portrait) and (pointer:coarse){#rotate{display:flex}}
+@media (max-height:460px){
+  .big{font-size:14px}.bar{width:64px}.card{padding:4px 8px}
+  #goal{font-size:11px;max-width:330px}
+  #mini{width:120px;height:80px}.tbtn{width:34px;height:34px;font-size:15px}
+  #pTitle{font-size:17px}.qtext{font-size:15px}#pOpts{grid-template-columns:repeat(auto-fill,minmax(165px,1fr))}
+  #toasts{bottom:52px}
+}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hudWrap">
+  <div id="hud">
+    <div class="card">
+      <div class="lbl">Wallet</div>
+      <div id="hMoney" class="big">₦0</div>
+      <div class="lbl small" id="hBank">Bank: ₦0</div>
+    </div>
+    <div class="card">
+      <div class="row"><span>❤️</span><div class="bar"><i id="bHealth"></i></div><span class="num" id="nHealth">0</span></div>
+      <div class="row"><span>⚡</span><div class="bar"><i id="bEnergy"></i></div><span class="num" id="nEnergy">0</span></div>
+      <div class="row"><span>🍛</span><div class="bar"><i id="bFood"></i></div><span class="num" id="nFood">0</span></div>
+      <div class="row"><span>⭐</span><div class="bar"><i id="bRep"></i></div><span class="num" id="nRep">0</span></div>
+    </div>
+    <div class="card">
+      <div class="big" id="hTime">07:00</div>
+      <div class="lbl small" id="hDay">Day 1</div>
+      <div class="lbl small" id="hJob">Unemployed</div>
+      <div class="lbl small" id="hHeat">🚨 Heat 0</div>
+    </div>
+  </div>
+  <div id="goal" class="card"><span>🎯</span><div><b>Next:</b> <span id="goalText"></span></div></div>
+</div>
+
+<div id="topRight">
+  <div class="tbtns">
+    <button class="tbtn" id="zIn" aria-label="Zoom in">＋</button>
+    <button class="tbtn" id="zOut" aria-label="Zoom out">－</button>
+    <button class="tbtn" id="bagBtn" aria-label="Bag">🎒</button>
+    <button class="tbtn" id="menuBtn" aria-label="Menu">☰</button>
+  </div>
+  <canvas id="mini" width="300" height="200"></canvas>
+</div>
+
+<div id="toasts"></div>
+<div id="hint"></div>
+<button id="actBtn">ENTER</button>
+<div id="joy"><div id="knob"></div></div>
+<div id="joyGhost">Drag to<br>move</div>
+
+<div id="panel">
+  <div class="box">
+    <button id="pClose" aria-label="Close">✕</button>
+    <div id="pTitle"></div>
+    <div id="pSub"></div>
+    <div id="pBody"></div>
+    <div id="pOpts"></div>
+  </div>
+</div>
+
+<div id="rotate">
+  <div class="ph"></div>
+  <div style="font-size:20px;font-weight:800">Turn your phone sideways</div>
+  <div style="opacity:.85;font-size:14px">My Naija Life plays in landscape mode.</div>
+</div>
+<div id="noThree">
+  <div style="font-size:20px;font-weight:800">Could not load the 3D engine</div>
+  <div style="opacity:.85;font-size:14px;max-width:420px">My Naija Life needs an internet connection the first time it opens, to download the 3D engine (Three.js). Connect to the internet and reload the page.</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+if (!window.THREE){ document.getElementById('noThree').style.display = 'flex'; return; }
+
+/* =========================================================
+   CORE SETUP
+   ========================================================= */
+const T = 40, COLS = 60, ROWS = 40, WW = COLS * T, WH = ROWS * T;
+const S = 0.05;                     // pixels -> 3D units (1 tile = 2 units)
+const TIME_SCALE = 1.5;             // game minutes per real second
+const SAVE_KEY = 'mynaijalife_v2';
+const $ = id => document.getElementById(id);
+const canvas = $('game');
+let vw = window.innerWidth, vh = window.innerHeight;
+
+const isTouch = window.matchMedia('(pointer: coarse)').matches || ('ontouchstart' in window);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = n => '₦' + Math.round(n).toLocaleString('en-NG');
+function mulberry(seed){ let a = seed >>> 0; return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const srand = mulberry(20261005);
+const hash = (c, r) => { const s = Math.sin(c * 12.9898 + r * 78.233) * 43758.5453; return s - Math.floor(s); };
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const shuffle = arr => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rint = (a, b) => Math.round(a + Math.random() * (b - a));
+const WEEKDAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const BAG = (('ontouchstart' in window) || window.matchMedia('(pointer: coarse)').matches) ? 'tap 🎒 (Bag)' : 'press I or 🎒 (Bag)';
+
+/* =========================================================
+   MAP DATA
+   ========================================================= */
+const ROAD_ROWS = [9, 20, 31], ROAD_COLS = [14, 30, 46];
+
+// door: 's' = door faces south road, 'n' = door faces north road
+const BUILDINGS = [
+  {id:'home',     name:'Your Home',              x:2,  y:4,  w:6, h:5, color:'#d9a070', roof:'#8a4b2a', ht:5,   rt:'pyramid', door:'s'},
+  {id:'mamaput',  name:"Mama Nkechi's Buka",     x:17, y:5,  w:5, h:4, color:'#e8b84f', roof:'#a8432c', ht:4,   rt:'pyramid', door:'s'},
+  {id:'market',   name:'Oja Market',             x:23, y:4,  w:6, h:5, color:'#e08a45', roof:'#6b3b1f', ht:4.5, rt:'flat',    door:'s'},
+  {id:'bank',     name:'Naija Trust Bank',       x:33, y:3,  w:7, h:6, color:'#4a7fc4', roof:'#1f3d6b', ht:13,  rt:'flat',    door:'s'},
+  {id:'hospital', name:'General Hospital',       x:49, y:3,  w:8, h:6, color:'#eef3f6', roof:'#c0392b', ht:10,  rt:'flat',    door:'s', extra:'cross'},
+  {id:'uni',      name:'Unity University',       x:2,  y:13, w:9, h:7, color:'#b4c97c', roof:'#4f6b2b', ht:9,   rt:'flat',    door:'s'},
+  {id:'jobs',     name:'Lagos Business Hub',     x:17, y:14, w:7, h:6, color:'#8a9aab', roof:'#3c4650', ht:16,  rt:'flat',    door:'s'},
+  {id:'news',     name:'Newsstand',              x:26, y:16, w:3, h:4, color:'#f2d16b', roof:'#2d7a3f', ht:3.5, rt:'flat',    door:'s'},
+  {id:'lg',       name:'Local Govt Secretariat', x:33, y:13, w:9, h:7, color:'#ede7d6', roof:'#0b6e3a', ht:9,   rt:'flat',    door:'s'},
+  {id:'church',   name:'Grace Assembly',         x:48, y:14, w:5, h:6, color:'#f4f0e6', roof:'#6c4ab0', ht:8,   rt:'flat',    door:'s', extra:'spire'},
+  {id:'mosque',   name:'Central Mosque',         x:54, y:14, w:5, h:6, color:'#eef6f0', roof:'#1e8a5a', ht:7,   rt:'flat',    door:'s', extra:'dome'},
+  {id:'estate',   name:'Shelter Real Estate',    x:2,  y:24, w:7, h:7, color:'#c4a0e0', roof:'#5b3a7a', ht:11,  rt:'flat',    door:'s'},
+  {id:'barber',   name:'Kutz Barbing Salon',     x:17, y:26, w:5, h:5, color:'#6cc0d6', roof:'#2a5e6b', ht:4.5, rt:'pyramid', door:'s'},
+  {id:'motors',   name:'Oga Motors',             x:33, y:24, w:9, h:7, color:'#dedede', roof:'#b33a3a', ht:6,   rt:'flat',    door:'s'},
+  {id:'joint',    name:'Chill Spot',             x:49, y:25, w:8, h:6, color:'#5a4a6c', roof:'#e0559b', ht:5,   rt:'flat',    door:'s'},
+  {id:'police',   name:'Police Station',         x:2,  y:34, w:7, h:4, color:'#3d5a8a', roof:'#1b2a45', ht:7,   rt:'flat',    door:'n'},
+  {id:'cyber',    name:'Cyber Cafe',             x:17, y:34, w:5, h:4, color:'#3a3f4a', roof:'#00b894', ht:4.5, rt:'flat',    door:'n'},
+  {id:'nysc',     name:'NYSC Secretariat',       x:23, y:34, w:6, h:4, color:'#f3f0e0', roof:'#2e7d32', ht:6,   rt:'flat',    door:'n'},
+  {id:'hustle',   name:'Hustle Hub',             x:33, y:34, w:7, h:4, color:'#f0a35e', roof:'#7a3e12', ht:5,   rt:'flat',    door:'n'}
+];
+const DECOR = [[40,34,4,4],[49,34,4,4],[55,34,4,4]].map((d, i) => ({
+  x:d[0], y:d[1], w:d[2], h:d[3], name:'', door:'n', rt:'pyramid', ht:4.5 + i * 0.6,
+  color:['#d9b38a','#a7c4a0','#9fbfcf'][i], roof:['#7a3b2a','#3f6b45','#3a5f72'][i]
+}));
+const B = {};
+[...BUILDINGS, ...DECOR].forEach(b => {
+  b.doorC = b.x + Math.floor(b.w / 2);
+  b.frontX = (b.doorC + 0.5) * T;
+  b.frontY = b.door === 's' ? (b.y + b.h + 0.5) * T : (b.y - 0.5) * T;
+});
+BUILDINGS.forEach(b => B[b.id] = b);
+const SOLIDS = [...BUILDINGS, ...DECOR].map(b => ({x:b.x*T, y:b.y*T, w:b.w*T, h:b.h*T}));
+
+function isRoad(c, r){ return ROAD_ROWS.some(y => r === y || r === y + 1) || ROAD_COLS.some(x => c === x || c === x + 1); }
+function nearRoad(c, r){
+  if (isRoad(c, r)) return false;
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (isRoad(c + dx, r + dy)) return true;
+  return false;
+}
+function inSolidTile(c, r, m){ return [...BUILDINGS, ...DECOR].some(b => c >= b.x - m && c < b.x + b.w + m && r >= b.y - m && r < b.y + b.h + m); }
+
+/* =========================================================
+   GAME DATA
+   ========================================================= */
+const ITEMS = {
+  bread:       {name:'Agege Bread',       price:1500, food:25, energy:3},
+  indomie:     {name:'Indomie & Egg',     price:1500, food:30, energy:4},
+  garri:       {name:'Garri & Groundnut', price:800,  food:18, energy:2},
+  water:       {name:'Pure Water (bag)',  price:500,  food:5,  energy:3, health:1},
+  malt:        {name:'Malt Drink',        price:700,  food:8,  energy:6},
+  suya:        {name:'Suya Wrap',         price:2500, food:30, energy:5},
+  paracetamol: {name:'Paracetamol',       price:600,  health:10},
+  vitamins:    {name:'Multivitamins',     price:3500, health:20}
+};
+const MARKET_ITEMS = ['bread','indomie','garri','water','malt','suya'];
+const PHARM_ITEMS = ['paracetamol','vitamins'];
+
+/* Question banks: correct answer is ALWAYS index 0 (options get shuffled when drawn) */
+const Q_JAMB = [
+  ['Nigeria gained independence in which year?', ['1960','1963','1957','1970']],
+  ['What is the capital of Nigeria?', ['Abuja','Lagos','Kaduna','Ibadan']],
+  ["Choose the word closest in meaning to 'ABUNDANT':", ['Plentiful','Scarce','Rare','Empty']],
+  ["Choose the opposite of 'GENEROUS':", ['Stingy','Kind','Liberal','Charitable']],
+  ['What is 15% of 2,000?', ['300','150','200','350']],
+  ['Which is the longest river in Nigeria?', ['River Niger','River Benue','Ogun River','Cross River']],
+  ['Solve: 3x + 5 = 20. What is x?', ['5','4','6','15']],
+  ['Which of these words is a noun?', ['Happiness','Quickly','Beautiful','Run']],
+  ['The chemical formula for water is:', ['H₂O','CO₂','O₂','NaCl']],
+  ['How many states are in Nigeria?', ['36','30','37','19']],
+  ['Nigeria became a republic in:', ['1963','1960','1966','1979']],
+  ['Which of these is a prime number?', ['17','21','27','15']],
+  ["'She ___ to school every day.' Choose the correct option:", ['goes','go','going','gone']],
+  ['What is the square root of 144?', ['12','14','11','16']]
+];
+const Q_CS = [
+  ['What does CPU stand for?', ['Central Processing Unit','Computer Personal Unit','Central Program Utility','Core Processing Utility']],
+  ['Which number system uses only 0 and 1?', ['Binary','Decimal','Octal','Hexadecimal']],
+  ['Which of these is a programming language?', ['Python','Photoshop','Excel','Windows']],
+  ['What does RAM stand for?', ['Random Access Memory','Read Access Memory','Run All Memory','Rapid Action Module']],
+  ['1 byte is equal to how many bits?', ['8','4','16','2']],
+  ['Which data structure is First-In-First-Out (FIFO)?', ['Queue','Stack','Tree','Graph']],
+  ['What does SQL stand for?', ['Structured Query Language','Simple Question Language','Sequential Query Logic','Standard Quick Language']],
+  ['Which of these is an operating system?', ['Linux','MySQL','Python','Photoshop']],
+  ['The time complexity of binary search is:', ['O(log n)','O(n)','O(n²)','O(1)']],
+  ['HTML is mainly used to:', ['Structure web pages','Store databases','Compile programs','Design circuits']]
+];
+const Q_ACCT = [
+  ['The accounting equation is:', ['Assets = Liabilities + Equity','Assets = Income − Expenses','Liabilities = Assets + Equity','Equity = Assets + Liabilities']],
+  ['An increase in an asset is recorded as a:', ['Debit','Credit','Loss','Liability']],
+  ["Which statement shows a company's financial position at a point in time?", ['Balance sheet','Income statement','Cash flow forecast','Sales ledger']],
+  ['Depreciation is the:', ['Reduction in value of a non-current asset over time','Increase in cash','Payment of tax','Interest on loans']],
+  ['Which of these is a liability?', ['Bank loan','Cash','Inventory','Equipment']],
+  ['Revenue minus expenses equals:', ['Profit','Capital','Assets','Drawings']],
+  ['The professional body for chartered accountants in Nigeria is:', ['ICAN','NBA','NMA','COREN']],
+  ['A trial balance is prepared mainly to:', ['Check the arithmetical accuracy of the ledger','Calculate tax','Pay salaries','Record sales']],
+  ['Drawings by the owner reduce:', ['Capital','Liabilities','Revenue','Expenses']]
+];
+const Q_MASS = [
+  ['The press is often called the:', ['Fourth Estate','Third Arm','First Estate','Fifth Column']],
+  ["Nigeria's first television station, WNTV, was located in:", ['Ibadan','Lagos','Kaduna','Enugu']],
+  ['The body that regulates broadcasting in Nigeria is:', ['NBC','NCC','NAFDAC','NPC']],
+  ["In news writing, the 'inverted pyramid' means:", ['The most important facts come first','The main point comes last','Quotes come first','Headlines are written last']],
+  ["Which is NOT one of the journalist's 5Ws?", ['Whose','Who','When','Where']],
+  ['A press release is mainly a tool of:', ['Public relations','Film editing','Printing','Sound engineering']],
+  ["'Libel' refers to:", ['Written defamation','Spoken defamation','Copyright theft','A fake advert']],
+  ['The opening paragraph of a news story is called the:', ['Lead (intro)','Byline','Masthead','Caption']],
+  ["The 'gatekeeper' in mass communication decides:", ['What news gets published','Who enters the studio','Station security','Advert prices']]
+];
+const Q_MECH = [
+  ['The SI unit of force is the:', ['Newton','Joule','Watt','Pascal']],
+  ['"Energy cannot be created or destroyed" is the:', ['First law of thermodynamics','Second law of thermodynamics',"Newton's third law","Hooke's law"]],
+  ['Torque is calculated as:', ['Force × perpendicular distance','Mass × acceleration','Work ÷ time','Force ÷ area']],
+  ['A four-stroke petrol engine works on the:', ['Otto cycle','Diesel cycle','Rankine cycle','Brayton cycle']],
+  ['The SI unit of power is the:', ['Watt','Newton','Joule','Pascal']],
+  ['Pressure is defined as:', ['Force per unit area','Mass per unit volume','Work per unit time','Force × distance']],
+  ['Which material is a good conductor of heat?', ['Copper','Wood','Rubber','Glass']],
+  ["Hooke's law relates:", ['Force and extension of a spring','Pressure and volume','Voltage and current','Heat and work']],
+  ['The council that regulates engineering practice in Nigeria is:', ['COREN','ICAN','NBA','NUC']]
+];
+const Q_MICRO = [
+  ['Penicillin was discovered by:', ['Alexander Fleming','Louis Pasteur','Robert Koch','Edward Jenner']],
+  ['Malaria is caused by:', ['Plasmodium','Salmonella','Candida','Influenza virus']],
+  ['Spherical-shaped bacteria are called:', ['Cocci','Bacilli','Spirilla','Vibrios']],
+  ['After Gram staining, Gram-positive bacteria appear:', ['Purple','Pink','Green','Yellow']],
+  ['An autoclave typically sterilizes at:', ['121°C','60°C','37°C','200°C']],
+  ['Typhoid fever is caused by:', ['Salmonella Typhi','Vibrio cholerae','Plasmodium falciparum','Candida albicans']],
+  ['Viruses can only multiply:', ['Inside living host cells','On agar plates','In sunlight','In dry air']],
+  ['Who first observed microorganisms with a microscope?', ['Antonie van Leeuwenhoek','Isaac Newton','Charles Darwin','Gregor Mendel']],
+  ['Antibiotics are effective against:', ['Bacteria','Viruses','All diseases','Allergies']],
+  ['The optimum temperature for most human pathogens is about:', ['37°C','10°C','70°C','100°C']]
+];
+const Q_INTERVIEW = [
+  ['"Tell us about yourself."', ['I summarize my education, skills and what I can offer this company','I talk about my village and family matters','"It is all on my CV."','I ask how much the salary is']],
+  ['"Why should we hire you?"', ["I have the right skills, I learn fast and I'm committed to results",'Because I really need money','My uncle knows your MD','I am not sure']],
+  ['"Where do you see yourself in 5 years?"', ['Growing into a senior role here and adding more value','Out of this company','Abroad. I go japa','I have not thought about it']],
+  ['"What is your greatest weakness?"', ["I sometimes take on too much, but I'm learning to delegate",'I have no weakness at all','I am always late','I hate working under pressure']],
+  ['"You disagree with your manager. What do you do?"', ['Discuss it respectfully with facts and respect the final decision','Argue loudly in the office','Post about it on social media','Ignore the instruction']],
+  ['"How do you handle pressure?"', ['I prioritize tasks, plan my time and stay calm','I panic','I leave the work for later','I blame my colleagues']],
+  ['"Do you have any questions for us?"', ['Yes. What does success look like in this role?','No','When is pay day?','Can I resume next year?']],
+  ['"You made a costly mistake at work. What next?"', ['Own it, report it quickly and help fix it','Hide it','Blame the intern','Resign immediately']]
+];
+
+const DEPTS = {
+  cs:    {name:'Computer Science',       bank:Q_CS,    job:'Software Developer'},
+  acct:  {name:'Accounting',             bank:Q_ACCT,  job:'Accountant'},
+  mass:  {name:'Mass Communication',     bank:Q_MASS,  job:'TV Journalist'},
+  mech:  {name:'Mechanical Engineering', bank:Q_MECH,  job:'Mechanical Engineer'},
+  micro: {name:'Microbiology',           bank:Q_MICRO, job:'Lab Scientist'}
+};
+
+const JOBS = [
+  {id:'labourer',   name:'Site Labourer',       pay:8000,  energy:35, hours:8},
+  {id:'sales',      name:'Shop Sales Rep',      pay:12000, energy:25, hours:8, interview:true},
+  {id:'okada',      name:'Okada Rider',         pay:18000, energy:40, hours:8, needsOkada:true},
+  {id:'teller',     name:'Bank Teller',         pay:35000, energy:25, hours:8, degree:true, nysc:true, cv:true, interview:true},
+  {id:'dev',        name:'Software Developer',  pay:60000, energy:25, hours:8, dept:'cs',    nysc:true, cv:true, interview:true},
+  {id:'accountant', name:'Accountant',          pay:50000, energy:25, hours:8, dept:'acct',  nysc:true, cv:true, interview:true},
+  {id:'journalist', name:'TV Journalist',       pay:45000, energy:30, hours:8, dept:'mass',  nysc:true, cv:true, interview:true},
+  {id:'engineer',   name:'Mechanical Engineer', pay:55000, energy:35, hours:8, dept:'mech',  nysc:true, cv:true, interview:true},
+  {id:'labsci',     name:'Lab Scientist',       pay:45000, energy:25, hours:8, dept:'micro', nysc:true, cv:true, interview:true}
+];
+const JOB = {}; JOBS.forEach(j => JOB[j.id] = j);
+
+const HUSTLES = [
+  {id:'water',  name:'Hawk pure water 💧',   min:3000,  max:6000,  energy:25, hours:4},
+  {id:'pos',    name:'POS agent 🏧',         min:8000,  max:20000, energy:20, hours:6, kit:'pos', kitName:'POS machine', kitCost:150000},
+  {id:'phone',  name:'Phone repair 📱',      min:10000, max:25000, energy:20, hours:5, skill:'phone', skillName:'Phone repair training', skillCost:60000},
+  {id:'design', name:'Graphic design gigs 🎨', min:15000, max:35000, energy:20, hours:5, skill:'design', skillName:'Graphic design training', skillCost:100000},
+  {id:'tutor',  name:'Private tutoring 📖',  min:8000,  max:15000, energy:20, hours:3, req:'student'},
+  {id:'code',   name:'Freelance coding 💻',  min:30000, max:80000, energy:25, hours:6, req:'cs'}
+];
+
+const HOUSING = [
+  {name:'Face-me-I-face-you room', rent:25000,  sleep:70,  rep:0},
+  {name:'Self-contain',            rent:60000,  sleep:90,  rep:3},
+  {name:'Mini flat',               rent:120000, sleep:100, rep:6},
+  {name:'2-Bedroom flat (Lekki)',  rent:350000, sleep:100, rep:12}
+];
+
+const NEWS = [
+  {h:'Fuel price jumps again at filling stations', mod:1.15},
+  {h:'CBN holds interest rate steady, markets calm', mod:1.0},
+  {h:'Tomato scarcity hits markets nationwide', mod:1.2},
+  {h:'Bumper harvest: food prices ease in Lagos markets', mod:0.9},
+  {h:'Naira gains slightly against the dollar', mod:0.95},
+  {h:'Transport unions call off planned strike', mod:1.0},
+  {h:'Heavy rainfall causes gridlock across the city', mod:1.05},
+  {h:'Police announce crackdown on internet fraud in Lagos', mod:1.0, heat:true},
+  {h:'Super Eagles win friendly, fans jubilate', mod:1.0},
+  {h:'Electricity tariff review sparks debate', mod:1.08},
+  {h:'Traders protest new market levy', mod:1.1},
+  {h:'Rice importers report bigger shipments', mod:0.92},
+  {h:'Tech startups in Yaba announce new hiring drive', mod:1.0},
+  {h:'ASUU and government resume talks', mod:1.0},
+  {h:'Diesel scarcity: generators go quiet in some areas', mod:1.12}
+];
+
+const NPC_NAMES = ['Chinedu','Aisha','Tunde','Ngozi','Emeka','Bisi','Musa','Funke','Ifeanyi','Zainab','Segun','Amaka','Yusuf','Kemi'];
+const NPC_ROLES = ['Trader','Student','Okada man','Lecturer','Banker','Tailor','Pastor','Mechanic','Nurse','Hairdresser','Civil servant','Corper','Driver','Caterer'];
+const POLICE_NAMES = ['Sgt. Okon','Cpl. Bello','Insp. Adeyemi'];
+const LINES = [
+  'How far? Hope body dey inside cream?',
+  'This Lagos traffic go kill person o!',
+  'Abeg, you get change for ₦1,000?',
+  'Na God dey run am, my brother.',
+  'Hustle no dey stop, sha.',
+  'I hear say fuel price don go up again.',
+  "Shey you don chop today? Mama Nkechi's buka dey sweet!",
+  'Make we see for Chill Spot this evening.',
+  'No wahala, everything go better.',
+  "You don register your NIN? Bank no go gree without am.",
+  'School fees don cost, but education na key.',
+  'My guy, avoid that Yahoo work o. Police dey everywhere.',
+  'NYSC camp no easy, but you go enjoy am.',
+  'If you wan pass interview, cut your hair and dress sharp.'
+];
+const POLICE_LINES = [
+  'Move along, my friend. Everything dey under control.',
+  'We dey watch everybody wey dey do Yahoo for this area.',
+  'Carry your ID card everywhere. You hear?',
+  'Good citizen, abi? Keep it that way.'
+];
+const TIPS = [
+  'Hungry? Eat at Mama Nkechi\'s Buka, or buy food at Oja Market and eat it from your Bag (press I).',
+  'Register your NIN at the Local Govt Secretariat before you try to bank or serve NYSC.',
+  'Write JAMB at Unity University. Score 200 and above to gain admission.',
+  'Attend lectures before exams. Each extra lecture gives you a hint during the exam.',
+  'Fail an exam and you get a carryover. Fail the carryover and you repeat the level.',
+  'After 300L you must do SIWES at Lagos Business Hub before you can pay 400L fees.',
+  'You need your NYSC discharge certificate and a printed CV for good jobs.',
+  'Get a haircut at Kutz before an interview. It helps.',
+  'Side hustles at Hustle Hub keep money flowing while you study.'
+];
+
+/* =========================================================
+   GROUND TEXTURE (2D canvas used as the 3D ground)
+   ========================================================= */
+const groundCanvas = document.createElement('canvas'); groundCanvas.width = WW; groundCanvas.height = WH;
+const TREES = [], LAMPS = [];
+(function buildGround(){
+  const g = groundCanvas.getContext('2d');
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++){
+    let col;
+    if (isRoad(c, r)) col = '#3b3d42';
+    else if (nearRoad(c, r)) col = (c + r) % 2 ? '#c4beaf' : '#bab4a5';
+    else { const v = hash(c, r); col = v < 0.33 ? '#4f9a43' : v < 0.66 ? '#55a248' : '#4a943f'; }
+    g.fillStyle = col; g.fillRect(c * T, r * T, T, T);
+    if (!isRoad(c, r) && !nearRoad(c, r)){
+      g.fillStyle = 'rgba(30,80,30,.35)';
+      for (let k = 0; k < 3; k++){ const hx = hash(c + k * 7, r) * T, hy = hash(c, r + k * 5) * T; g.fillRect(c * T + hx, r * T + hy, 2, 4); }
+    } else if (nearRoad(c, r)){
+      g.strokeStyle = 'rgba(0,0,0,.08)'; g.strokeRect(c * T + .5, r * T + .5, T - 1, T - 1);
+    }
+  }
+  g.fillStyle = '#f2c94c';
+  ROAD_ROWS.forEach(R => { const y = (R + 1) * T; for (let x = 0; x < WW; x += 40){ const c = Math.floor(x / T); if (!ROAD_COLS.some(v => c === v || c === v + 1)) g.fillRect(x + 9, y - 2, 22, 4); } });
+  ROAD_COLS.forEach(C => { const x = (C + 1) * T; for (let y = 0; y < WH; y += 40){ const r = Math.floor(y / T); if (!ROAD_ROWS.some(v => r === v || r === v + 1)) g.fillRect(x - 2, y + 9, 4, 22); } });
+  g.fillStyle = 'rgba(255,255,255,.8)';
+  ROAD_ROWS.forEach(R => ROAD_COLS.forEach(C => {
+    for (let i = 0; i < 5; i++){ g.fillRect(C * T - 14, R * T + 4 + i * 15, 10, 8); g.fillRect((C + 2) * T + 4, R * T + 4 + i * 15, 10, 8); }
+  }));
+  // door paths
+  [...BUILDINGS, ...DECOR].forEach(b => { g.fillStyle = '#9c968a'; g.fillRect(b.doorC * T + 6, b.door === 's' ? (b.y + b.h) * T : (b.y - 1) * T, T - 12, T); });
+
+  let placed = 0;
+  for (let i = 0; i < 700 && placed < 140; i++){
+    const c = Math.floor(srand() * COLS), r = Math.floor(srand() * ROWS);
+    if (isRoad(c, r) || nearRoad(c, r) || inSolidTile(c, r, 1)) continue;
+    TREES.push({x:(c + 0.5) * T + (srand() - 0.5) * 14, y:(r + 0.5) * T + (srand() - 0.5) * 14, s:0.8 + srand() * 0.6, cone:srand() < 0.35, rot:srand() * 6});
+    placed++;
+  }
+  const doorTiles = new Set([...BUILDINGS, ...DECOR].map(b => b.doorC + ',' + Math.floor(b.frontY / T)));
+  ROAD_ROWS.forEach(R => { for (let c = 3; c < COLS; c += 6){ const r = R + 2; if (!isRoad(c, r) && !inSolidTile(c, r, 0) && !doorTiles.has(c + ',' + r)) LAMPS.push({x:(c + 0.5) * T, y:(r + 0.3) * T}); } });
+  ROAD_COLS.forEach(C => { for (let r = 3; r < ROWS; r += 6){ const c = C + 2; if (!isRoad(c, r) && !inSolidTile(c, r, 0) && !doorTiles.has(c + ',' + r)) LAMPS.push({x:(c + 0.3) * T, y:(r + 0.5) * T}); } });
+})();
+
+/* Minimap static layer */
+const mini = $('mini'), mctx = mini.getContext('2d');
+const miniBase = document.createElement('canvas'); miniBase.width = mini.width; miniBase.height = mini.height;
+(function(){
+  const m = miniBase.getContext('2d'), sx = mini.width / WW, sy = mini.height / WH;
+  m.fillStyle = '#3f8a38'; m.fillRect(0, 0, mini.width, mini.height);
+  m.fillStyle = '#555';
+  ROAD_ROWS.forEach(R => m.fillRect(0, R * T * sy, mini.width, 2 * T * sy));
+  ROAD_COLS.forEach(C => m.fillRect(C * T * sx, 0, 2 * T * sx, mini.height));
+  DECOR.forEach(b => { m.fillStyle = '#8a7a6a'; m.fillRect(b.x * T * sx, b.y * T * sy, b.w * T * sx, b.h * T * sy); });
+  BUILDINGS.forEach(b => { m.fillStyle = b.roof; m.fillRect(b.x * T * sx, b.y * T * sy, b.w * T * sx, b.h * T * sy); });
+})();
+
+/* =========================================================
+   STATE
+   ========================================================= */
+function newState(){
+  return {
+    v:2, money:2000000, bank:0, health:100, energy:100, hunger:75, rep:50,
+    day:1, minutes:7 * 60,
+    jamb:0, uni:null, degree:null, nysc:0, ppa:0, cv:false,
+    job:null, skills:{}, kits:{},
+    housing:0, maxHousing:0, rentDueDay:8, rentStrikes:0, levyDay:-99,
+    inv:{bread:1, water:1}, hasOkada:false, riding:false, nin:false,
+    heat:0, arrests:0, yahooHits:0, lastStop:-9999,
+    daily:{}, news:[], priceMod:1, heatNews:false,
+    px:B.home.frontX, py:B.home.frontY,
+    earned:0, shifts:0, hustleEarned:0
+  };
+}
+let state = newState();
+const player = {x:state.px, y:state.py, face:0, anim:0, moving:false};
+
+function genNews(){
+  const pool = NEWS.slice(), out = [];
+  while (out.length < 3 && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  state.news = out.map(n => n.h);
+  state.heatNews = out.some(n => n.heat);
+  state.priceMod = clamp(out.reduce((a, n) => a * n.mod, 1), 0.85, 1.35);
+}
+const price = base => Math.max(10, Math.round(base * state.priceMod / 10) * 10);
+const hour = () => Math.floor(state.minutes / 60) % 24;
+const inHours = (a, b) => hour() >= a && hour() < b;
+const absMin = () => (state.day - 1) * 1440 + state.minutes;
+
+function saveGame(silent){
+  state.px = player.x; state.py = player.y;
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); if (!silent) toast('Game saved.', 'info'); }
+  catch (e) { if (!silent) toast('Could not save on this browser.', 'bad'); }
+}
+function loadGame(){
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    state = Object.assign(newState(), JSON.parse(raw));
+    player.x = state.px; player.y = state.py;
+    return true;
+  } catch (e) { return false; }
+}
+
+/* =========================================================
+   CORE SYSTEMS
+   ========================================================= */
+function gain(stat, v){ state[stat] = clamp(state[stat] + v, 0, 100); }
+function spend(c){
+  if (state.money < c){ toast(`Not enough cash. You need ${fmt(c)}. Withdraw from the bank or hustle.`, 'bad'); return false; }
+  state.money -= c; return true;
+}
+function advanceTime(mins){
+  state.minutes += mins;
+  while (state.minutes >= 1440){ state.minutes -= 1440; newDay(); }
+}
+function newDay(){
+  state.day++;
+  state.daily = {};
+  if (state.bank > 0) state.bank += state.bank * 0.0003;
+  state.heat = clamp(state.heat - 5, 0, 100);
+  genNews();
+  if (state.day >= state.rentDueDay){
+    const rent = HOUSING[state.housing].rent;
+    if (state.money >= rent){ state.money -= rent; paidRent(rent); }
+    else if (state.money + state.bank >= rent){ state.bank -= rent - state.money; state.money = 0; paidRent(rent); }
+    else {
+      state.rentStrikes++;
+      gain('rep', -8);
+      if (state.rentStrikes >= 3 && state.housing > 0){
+        state.housing = 0; state.rentStrikes = 0; state.rentDueDay = state.day + 7;
+        toast('Landlord don pack your load! You were moved back to a face-me-I-face-you room.', 'bad');
+      } else {
+        state.rentDueDay = state.day + 1;
+        toast(`Landlord is on your case! Rent of ${fmt(rent)} is unpaid. Strike ${state.rentStrikes}/3.`, 'bad');
+      }
+    }
+  }
+  toast(`${WEEKDAYS[(state.day - 1) % 7]}, Day ${state.day} begins.`, 'info');
+}
+function paidRent(rent){ state.rentStrikes = 0; state.rentDueDay = state.day + 7; toast(`Weekly rent paid: ${fmt(rent)}`, 'info'); }
+function faint(){
+  const bill = 20000;
+  const fromWallet = Math.min(state.money, bill); state.money -= fromWallet;
+  const fromBank = Math.min(state.bank, bill - fromWallet); state.bank -= fromBank;
+  state.health = 45; state.energy = 40; state.hunger = Math.max(state.hunger, 40); gain('rep', -3);
+  player.x = B.hospital.frontX; player.y = B.hospital.frontY;
+  advanceTime(360);
+  toast('You collapsed! You woke up at General Hospital. Bill: ₦20,000. Eat and rest to avoid this.', 'bad');
+  saveGame(true);
+}
+function goalText(){
+  if (state.hunger < 30) return `You're hungry! Eat at Mama Nkechi's Buka, or ${BAG} to eat food you bought at Oja Market.`;
+  if (state.energy < 18) return "You're exhausted. Go home and sleep (after 6pm) or take a nap.";
+  if (state.health < 30) return 'Your health is low. Visit General Hospital.';
+  if (!state.nin) return 'Register your NIN at the Local Govt Secretariat (8am to 4pm).';
+  if (!state.degree){
+    if (!state.jamb) return 'Write JAMB at Unity University to gain admission (score 200+).';
+    const U = state.uni;
+    if (!U) return 'Choose your department at Unity University.';
+    if (U.needSiwes) return `Do your SIWES/IT at Lagos Business Hub (${U.siwes || 0}/3 days).`;
+    if (!U.paid) return `Pay your ${U.level}L school fees at Unity University.`;
+    if (U.carry) return U.lectures < 1 ? 'Attend 1 lecture, then rewrite your carryover exam.' : 'Rewrite your carryover exam at Unity University.';
+    return U.lectures < 2 ? `Attend lectures at Unity University (${U.lectures}/2 before exam).` : `Write your ${U.level}L exam at Unity University.`;
+  }
+  if (state.nysc === 0) return 'Register for NYSC at the NYSC Secretariat.';
+  if (state.nysc === 1) return 'Go to NYSC orientation camp (NYSC Secretariat).';
+  if (state.nysc === 2) return state.ppa < 4 ? `Serve at your PPA (${state.ppa}/4 days) at the NYSC Secretariat.` : 'Collect your NYSC discharge certificate.';
+  if (!state.cv) return 'Print your CV at the Cyber Cafe.';
+  if (!state.job) return 'Apply for jobs at Lagos Business Hub and pass the interview. Get a haircut first!';
+  return 'Work your daily shift, grow a side hustle at Hustle Hub and upgrade your house.';
+}
+
+/* =========================================================
+   TOASTS
+   ========================================================= */
+function toast(msg, type){
+  const box = $('toasts');
+  const el = document.createElement('div');
+  el.className = 'toast ' + (type || '');
+  el.textContent = msg;
+  box.appendChild(el);
+  while (box.children.length > 3) box.removeChild(box.firstChild);
+  setTimeout(() => { el.style.transition = 'opacity .4s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 400); }, 3800);
+}
+
+/* =========================================================
+   QUIZ ENGINE (JAMB, exams, interviews)
+   ========================================================= */
+let quiz = null;
+function draw(bank, n){
+  return shuffle(bank).slice(0, n).map(([q, o]) => {
+    const order = shuffle(o.map((_, i) => i));
+    return {q, opts:order.map(i => o[i]), ans:order.indexOf(0)};
+  });
+}
+function startQuiz(cfg){ quiz = {cfg, i:0, score:0, hints:cfg.hints || 0, removed:[]}; openPanel('quiz'); }
+function answerQuiz(k){
+  const Q = quiz.cfg.questions[quiz.i];
+  if (k === Q.ans){ quiz.score++; toast('Correct ✅', 'good'); }
+  else toast(`Wrong ❌ Answer: ${Q.opts[Q.ans]}`, 'bad');
+  quiz.i++; quiz.removed = [];
+  if (quiz.i >= quiz.cfg.questions.length){ finishQuiz(); return false; }
+}
+function finishQuiz(){
+  const q = quiz; quiz = null;
+  q.cfg.onDone(q.score, q.cfg.questions.length);
+  if (panelState && panelState.kind === 'quiz') closePanel();
+}
+function result(title, body, options){
+  openPanel('result', {title, body, options: options || [opt('Continue ▶', '', () => { closePanel(); return false; })]});
+}
+
+/* =========================================================
+   EDUCATION, NYSC, JOBS, CRIME
+   ========================================================= */
+function examResult(s, n){
+  const U = state.uni, pct = Math.round(s / n * 100);
+  advanceTime(180); gain('energy', -15); gain('hunger', -10);
+  if (pct >= 50){
+    U.scores.push(pct); U.carry = false; U.lectures = 0;
+    if (U.level === 400){ graduate(); return; }
+    if (U.level === 300){ U.needSiwes = true; U.siwes = 0; }
+    U.level += 100; U.paid = false; gain('rep', 2);
+    result('You passed! ✅', `<p>Score: <b>${pct}%</b>.</p><p>${U.needSiwes ? 'Next: do your SIWES/IT at Lagos Business Hub, then pay your 400L fees.' : `You are now in <b>${U.level}L</b>. Pay your school fees to continue.`}</p>`);
+  } else if (!U.carry){
+    U.carry = true; U.lectures = 0; gain('rep', -1);
+    result('Carryover ❌', `<p>Score: <b>${pct}%</b>. Pass mark is 50%.</p><p>You have a <b>carryover</b>. Attend at least 1 lecture, then rewrite it for ₦20,000. Fail it again and you repeat the level.</p>`);
+  } else {
+    U.carry = false; U.paid = false; U.lectures = 0; gain('rep', -3);
+    result('Repeat level 😓', `<p>Score: <b>${pct}%</b>. You failed your carryover.</p><p>You must <b>repeat ${U.level}L</b> and pay the school fees again.</p>`);
+  }
+}
+function graduate(){
+  const U = state.uni, avg = Math.round(U.scores.reduce((a, b) => a + b, 0) / U.scores.length);
+  const cls = avg >= 85 ? 'First Class' : avg >= 70 ? 'Second Class Upper' : avg >= 60 ? 'Second Class Lower' : 'Third Class';
+  state.degree = {dept:U.dept, cls, avg};
+  state.uni = null; gain('rep', 10);
+  result('🎓 Congratulations, graduate!', `<p>You earned a <b>B.Sc. ${DEPTS[U.dept].name}</b> with <b>${cls}</b> (average ${avg}%).</p><p>Next step: register for <b>NYSC</b> at the NYSC Secretariat.</p>`);
+}
+function jobBlock(j){
+  if (state.job === j.id) return 'This is your current job.';
+  if (j.needsOkada && !state.hasOkada) return 'Requires your own okada (Oga Motors).';
+  if ((j.degree || j.dept) && !state.degree) return 'Requires a university degree.';
+  if (j.dept && state.degree.dept !== j.dept) return `Requires a ${DEPTS[j.dept].name} degree.`;
+  if (j.nysc && state.nysc < 3) return 'Requires your NYSC discharge certificate.';
+  if (j.cv && !state.cv) return 'Print your CV at the Cyber Cafe first.';
+  if (j.interview && state.daily['iv_' + j.id]) return 'You already interviewed for this today. Try again tomorrow.';
+  if (j.interview && !inHours(8, 16)) return 'Interviews hold 8am to 4pm.';
+  return null;
+}
+function startInterview(j){
+  const qs = j.dept ? draw(Q_INTERVIEW, 2).concat(draw(DEPTS[j.dept].bank, 2)) : draw(Q_INTERVIEW, j.degree ? 4 : 3);
+  startQuiz({title:`Interview: ${j.name}`, questions:qs, hints:0, onDone:(s, n) => {
+    advanceTime(120); state.daily['iv_' + j.id] = true;
+    let bonus = 0, notes = [];
+    if (state.daily.groomed){ bonus += 0.5; notes.push('fresh haircut (+0.5)'); }
+    if (state.rep >= 70){ bonus += 0.5; notes.push('good reputation (+0.5)'); }
+    if (state.degree && state.degree.cls === 'First Class'){ bonus += 1; notes.push('First Class (+1)'); }
+    else if (state.degree && state.degree.cls === 'Second Class Upper'){ bonus += 0.5; notes.push('2:1 (+0.5)'); }
+    const need = Math.ceil(n * 0.7), total = s + bonus;
+    if (total >= need){
+      state.job = j.id; gain('rep', 2);
+      result('You got the job! 🎉', `<p>HR: "Congratulations! You resume immediately as our <b>${j.name}</b>."</p><p>Interview score: ${s}/${n}${notes.length ? ` + ${notes.join(', ')}` : ''}.</p><p>Come back here every day (6am to 6pm) to work your shift and earn <b>${fmt(j.pay)}</b>.</p>`);
+    } else {
+      result('Application declined 😞', `<p>HR: "We regret to inform you that you were not successful at this time."</p><p>Interview score: ${s}/${n}${notes.length ? ` + ${notes.join(', ')}` : ''}. You needed ${need}.</p><div class="note">Tips: get a haircut at Kutz before interviews, build your reputation, and try again tomorrow. Keep your side hustle going meanwhile.</div>`);
+    }
+  }});
+}
+function hustleBlock(h){
+  if (state.daily.hustle) return 'You already did a side hustle today.';
+  if (!inHours(7, 21)) return 'Hustling hours are 7am to 9pm.';
+  if (state.energy < h.energy) return `Too tired. You need ${h.energy} energy.`;
+  if (h.kit && !state.kits[h.kit]) return `You need a ${h.kitName} first.`;
+  if (h.skill && !state.skills[h.skill]) return `Complete ${h.skillName} first.`;
+  if (h.req === 'student' && !(state.uni || state.degree)) return 'Only university students or graduates can tutor.';
+  if (h.req === 'cs' && !((state.degree && state.degree.dept === 'cs') || (state.uni && state.uni.dept === 'cs' && state.uni.level >= 300))) return 'Requires Computer Science 300L+ or a CS degree.';
+  return null;
+}
+function arrest(reason){
+  state.arrests++;
+  player.x = B.police.frontX; player.y = B.police.frontY; state.riding = false;
+  let seized = 0;
+  if (state.heat >= 60){ seized = Math.round(state.money * 0.4); state.money -= seized; }
+  openPanel('arrest', {reason, seized, bribeTried:false});
+}
+function detain(){
+  advanceTime(3 * 1440);
+  state.health = clamp(state.health - 25, 10, 100); state.energy = 25; state.hunger = 20;
+  gain('rep', -15); state.heat = clamp(state.heat - 40, 0, 100);
+  let lost = '';
+  if (state.job){ lost = ' Your employer sacked you for being absent.'; state.job = null; }
+  result('Released after 3 days ⛓️', `<p>Cell life no easy at all. You are weak, hungry and your reputation took a hit.${lost}</p>`);
+}
+function checkpointComply(){
+  if (state.heat >= 35 && Math.random() < 0.75){ arrest('Police searched your phone and found suspicious chats and transfers.'); return; }
+  gain('rep', 1);
+  result('You are free to go 👮🏾', '<p>"Oya waka. Next time carry your ID card."</p>');
+}
+
+/* =========================================================
+   PANELS
+   ========================================================= */
+let panelState = null, paused = false;
+const opt = (label, note, action, why, cls) => ({label, note, action, why, cls:cls || ''});
+const closedMsg = (a, b) => `Open ${a} to ${b}.`;
+const fmtH = h => h === 0 ? '12am' : h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`;
+
+const PANELS = {
+  intro: () => ({
+    title: 'Welcome to My Naija Life 🇳🇬',
+    sub: 'You just landed in the city with ₦2,000,000, an SSCE and big dreams.',
+    body: `<ul>
+      <li><b>Move:</b> WASD / arrow keys on PC. On mobile, drag the left side of the screen.</li>
+      <li><b>Camera:</b> drag with the mouse (or the right side of the screen on mobile) to rotate. Use ＋ / － or the mouse wheel to zoom.</li>
+      <li><b>Enter / talk:</b> walk to a door or person and press <b>E</b>, or tap the green button.</li>
+      <li><b>🍛 How to eat:</b> when the hunger bar drops, walk to <b>Mama Nkechi's Buka</b> for a hot meal, or buy food at <b>Oja Market</b> and eat it from your <b>Bag</b> (press <b>I</b> or ☰ → Bag). If hunger hits zero, your health drains.</li>
+      <li><b>⚡ Energy:</b> sleep at home after 6pm. <b>❤️ Health:</b> visit the hospital.</li>
+      <li><b>Your path:</b> NIN → JAMB → choose a department → lectures and exams (avoid carryovers!) → SIWES → graduate → NYSC → print CV → interview → job.</li>
+      <li><b>Hustle:</b> side hustles at Hustle Hub pay the bills. Yahoo Yahoo pays fast but police dey.</li>
+      <li>Follow the <b>🎯 Next</b> box at the top. The game saves automatically.</li>
+    </ul>`,
+    options: [opt("Let's go! 🚀", 'Start your new life', () => { closePanel(); return false; })]
+  }),
+
+  home: () => {
+    const h = HOUSING[state.housing], hr = hour(), night = hr >= 18 || hr < 5;
+    const napWhy = (state.daily.naps || 0) >= 2 ? 'You have napped enough today.' : null;
+    return {
+      title: 'Your Home', sub: `${h.name} · Rent ${fmt(h.rent)}/week · Next rent: Day ${state.rentDueDay}`,
+      body: '',
+      options: [
+        opt('Sleep till morning 🌙', `Wake at 6:00 · +${h.sleep} energy`, () => {
+          advanceTime(hr >= 18 ? (1440 - state.minutes) + 360 : 360 - state.minutes);
+          gain('energy', h.sleep); gain('health', 10); gain('hunger', -15);
+          toast('You slept well. You wake up hungry, so eat breakfast!', 'good');
+        }, night ? null : 'You can only sleep for the night after 6pm.'),
+        opt('Take a nap 😴', '2 hours · +25 energy', () => {
+          state.daily.naps = (state.daily.naps || 0) + 1;
+          advanceTime(120); gain('energy', 25); gain('hunger', -5); toast('Short nap. You feel better.', 'good');
+        }, napWhy),
+        opt('Eat from your bag 🎒', 'Open inventory', () => { openPanel('inventory'); return false; })
+      ]
+    };
+  },
+
+  mamaput: () => {
+    const open = inHours(7, 21);
+    const meals = [['Akara & Pap', 1000, 25, 4], ['Jollof Rice & Chicken', 3500, 55, 8], ['Amala, Ewedu & Assorted', 2500, 45, 6], ['Rice, Beans & Plantain', 1800, 38, 5], ['Eba & Egusi Soup', 2200, 45, 6]];
+    return {
+      title: "Mama Nkechi's Buka 🍛", sub: open ? 'Open 7am to 9pm. Hot food dey!' : 'Closed. Mama don go house. Opens 7am.',
+      body: `<div class="kv"><b>Your hunger</b><span>${Math.round(state.hunger)}/100 (higher is fuller)</span></div>${state.priceMod > 1.04 ? '<p><i>Mama says: "Na the news o, prices don go up small today."</i></p>' : ''}`,
+      options: meals.map(([n, b, f, e]) => {
+        const c = price(b);
+        return opt(n, `${fmt(c)} · +${f} food · +${e} energy`, () => {
+          if (!spend(c)) return;
+          gain('hunger', f); gain('energy', e); gain('health', 2); advanceTime(30);
+          toast(`You ate ${n}. E sweet die!`, 'good');
+        }, !open ? 'The buka is closed right now.' : state.hunger >= 98 ? 'You are already full.' : null);
+      })
+    };
+  },
+
+  market: () => {
+    const open = inHours(6, 20);
+    return {
+      title: 'Oja Market 🛒', sub: open ? `Open 6am to 8pm. Food you buy goes into your Bag. Eat it anytime: ${BAG}.` : 'Market has closed. Opens 6am.',
+      body: '',
+      options: MARKET_ITEMS.map(k => {
+        const it = ITEMS[k], c = price(it.price);
+        return opt(`Buy ${it.name}`, `${fmt(c)} · +${it.food} food · You have ${state.inv[k] || 0}`, () => {
+          if (!spend(c)) return;
+          state.inv[k] = (state.inv[k] || 0) + 1; advanceTime(5);
+          toast(`Bought ${it.name}. To eat it, ${BAG}.`, 'good');
+        }, open ? null : 'The market is closed.');
+      })
+    };
+  },
+
+  bank: () => {
+    const open = inHours(8, 16);
+    const why = !open ? 'Banking hall is open 8am to 4pm.' : !state.nin ? 'You need an NIN to bank. Register at the Local Govt Secretariat.' : null;
+    const amounts = [10000, 50000, 200000, 1000000];
+    const opts = [];
+    amounts.forEach(a => opts.push(opt(`Deposit ${fmt(a)}`, 'Move cash to savings', () => {
+      if (state.money < a){ toast('Not enough cash in your wallet.', 'bad'); return; }
+      state.money -= a; state.bank += a; toast(`Deposited ${fmt(a)}.`, 'good');
+    }, why)));
+    opts.push(opt('Deposit ALL cash', fmt(state.money), () => { state.bank += state.money; state.money = 0; toast('All cash deposited.', 'good'); }, why || (state.money <= 0 ? 'No cash to deposit.' : null)));
+    amounts.forEach(a => opts.push(opt(`Withdraw ${fmt(a)}`, 'Take cash out', () => {
+      if (state.bank < a){ toast('Insufficient balance.', 'bad'); return; }
+      state.bank -= a; state.money += a; toast(`Withdrew ${fmt(a)}.`, 'good');
+    }, why)));
+    opts.push(opt('Withdraw ALL', fmt(state.bank), () => { state.money += state.bank; state.bank = 0; toast('All savings withdrawn.', 'good'); }, why || (state.bank <= 0 ? 'Your account is empty.' : null)));
+    return {
+      title: 'Naija Trust Bank 🏦', sub: open ? 'Open 8am to 4pm · Savings earn about 11% per year' : 'Banking hall is closed. Opens 8am.',
+      body: `<div class="kv"><b>Wallet</b><span>${fmt(state.money)}</span><b>Savings</b><span>${fmt(state.bank)}</span><b>NIN</b><span>${state.nin ? 'Verified ✅' : 'Not registered ❌'}</span></div>`,
+      options: opts
+    };
+  },
+
+  hospital: () => ({
+    title: 'General Hospital 🏥', sub: 'Open 24 hours. Health is wealth.',
+    body: `<div class="kv"><b>Your health</b><span>${Math.round(state.health)}/100</span></div>`,
+    options: [
+      opt('Basic check-up 🩺', `${fmt(5000)} · +20 health · 1 hour`, () => { if (!spend(5000)) return; gain('health', 20); advanceTime(60); toast('Doctor says you are fine. Rest well.', 'good'); }, state.health >= 100 ? 'You are already in perfect health.' : null),
+      opt('Full treatment 🏥', `${fmt(25000)} · Health to 100 · 3 hours`, () => { if (!spend(25000)) return; state.health = 100; advanceTime(180); toast('Fully treated. You feel brand new!', 'good'); }, state.health >= 100 ? 'You are already in perfect health.' : null),
+      ...PHARM_ITEMS.map(k => { const it = ITEMS[k]; return opt(`Buy ${it.name} 💊`, `${fmt(it.price)} · +${it.health} health when used`, () => { if (!spend(it.price)) return; state.inv[k] = (state.inv[k] || 0) + 1; toast(`Bought ${it.name}.`, 'good'); }); })
+    ]
+  }),
+
+  uni: () => {
+    const open = inHours(8, 16), closed = 'University offices and lectures run 8am to 4pm.';
+    const opts = []; let body = '', sub = 'Education na key.';
+    if (state.degree){
+      const d = state.degree;
+      body = `<div class="kv"><b>Degree</b><span>B.Sc. ${DEPTS[d.dept].name}</span><b>Class</b><span>${d.cls} (${d.avg}%)</span></div><p style="margin-top:8px">You are an alumnus of Unity University. Proceed to NYSC and job hunting.</p>`;
+      opts.push(opt('Visit the alumni office 🎓', 'Network with old students · +1 rep', () => { state.daily.alumni = true; gain('rep', 1); advanceTime(60); toast('You connected with some alumni.', 'good'); }, state.daily.alumni ? 'Already visited today.' : null));
+    } else if (!state.jamb){
+      sub = 'Admission requires a JAMB UTME score of 200 or above.';
+      body = '<p>Answer 8 questions on English, Maths and General Knowledge. Each correct answer is worth 50 marks.</p>';
+      opts.push(opt('Write JAMB UTME ✍️', `${fmt(7700)} · 8 questions · 3 hours`, () => {
+        if (!spend(7700)) return;
+        state.daily.jamb = true;
+        startQuiz({title:'JAMB UTME ✍️', questions:draw(Q_JAMB, 8), hints:0, onDone:(s, n) => {
+          const score = Math.round(s / n * 400); advanceTime(180); gain('energy', -15); gain('hunger', -10);
+          if (score >= 200){ state.jamb = score; gain('rep', 3); result('Admission granted! 🎉', `<p>You scored <b>${score}/400</b>.</p><p>Now choose your department.</p>`, [opt('Choose department ▶', '', () => { openPanel('uni'); return false; })]); }
+          else result('JAMB result 📄', `<p>You scored <b>${score}/400</b>. You need 200 to gain admission.</p><p>Study well and try again tomorrow.</p>`);
+        }});
+        return false;
+      }, !open ? closed : state.daily.jamb ? 'You can only write JAMB once per day.' : state.energy < 15 ? 'Too tired to write an exam (need 15 energy).' : null));
+    } else if (!state.uni){
+      sub = `JAMB score: ${state.jamb}/400. Choose your department. This decides your career!`;
+      Object.keys(DEPTS).forEach(k => opts.push(opt(`Study ${DEPTS[k].name}`, `Acceptance + 100L fees ${fmt(200000)} · Career: ${DEPTS[k].job}`, () => {
+        if (!spend(200000)) return;
+        state.uni = {dept:k, level:100, paid:true, lectures:0, carry:false, scores:[], needSiwes:false, siwes:0};
+        gain('rep', 3); toast(`Welcome to ${DEPTS[k].name}, 100L! Attend lectures, then write your exam.`, 'good');
+      }, open ? null : closed)));
+    } else {
+      const U = state.uni, D = DEPTS[U.dept];
+      sub = `${D.name} · ${U.level}L${U.carry ? ' · ⚠️ Carryover' : ''}`;
+      const avg = U.scores.length ? Math.round(U.scores.reduce((a, b) => a + b, 0) / U.scores.length) + '%' : 'No results yet';
+      body = `<div class="kv"><b>Level</b><span>${U.level}L</span><b>School fees</b><span>${U.needSiwes ? 'SIWES first' : U.paid ? 'Paid ✅' : 'Not paid ❌'}</span><b>Lectures this session</b><span>${U.lectures}/4</span><b>Carryover</b><span>${U.carry ? 'Yes ⚠️' : 'No'}</span><b>Average score</b><span>${avg}</span></div>
+        <div class="note">How it works: attend at least 2 lectures (1 for a carryover), then write a 6-question exam. Pass mark is 50%. Each lecture after the first gives you a hint that removes 2 wrong options.</div>`;
+      if (U.needSiwes){
+        opts.push(opt('SIWES / IT pending 🏭', 'Go to Lagos Business Hub', () => {}, 'Complete your SIWES at Lagos Business Hub first.'));
+      } else if (!U.paid){
+        opts.push(opt(`Pay ${U.level}L school fees 💳`, fmt(150000), () => { if (!spend(150000)) return; U.paid = true; U.lectures = 0; toast(`${U.level}L fees paid. Attend lectures!`, 'good'); }, open ? null : closed));
+      } else {
+        opts.push(opt('Attend lecture 📚', `${U.lectures}/4 attended · 4 hrs · -20 energy`, () => {
+          state.daily.lecture = true; U.lectures++; gain('energy', -20); gain('hunger', -10); advanceTime(240);
+          toast('Lecture attended. You understand the course better.', 'good');
+        }, !open ? closed : state.daily.lecture ? 'Only one lecture per day. Come back tomorrow.' : U.lectures >= 4 ? 'You have attended all lectures. Write your exam.' : state.energy < 20 ? 'Too tired for lectures (need 20 energy).' : null));
+        const need = U.carry ? 1 : 2, hints = Math.max(0, U.lectures - 1);
+        opts.push(opt(U.carry ? 'Rewrite carryover exam ♻️' : `Write ${U.level}L exam 📝`, `${U.carry ? fmt(20000) + ' · ' : ''}6 questions · Pass 50% · ${hints} hint(s)`, () => {
+          if (U.carry && !spend(20000)) return;
+          state.daily.exam = true;
+          startQuiz({title:`${U.carry ? 'Carryover' : U.level + 'L'} Exam: ${D.name}`, questions:draw(D.bank, 6), hints, onDone:examResult});
+          return false;
+        }, !open ? closed : state.daily.exam ? 'Only one exam per day.' : U.lectures < need ? `Attend at least ${need} lecture(s) first.` : state.energy < 15 ? 'Too tired to write an exam (need 15 energy).' : null, 'cur'));
+      }
+    }
+    return {title:'Unity University 🎓', sub, body, options:opts};
+  },
+
+  jobs: () => {
+    const opts = [];
+    const j = state.job ? JOB[state.job] : null;
+    const U = state.uni;
+    if (U && U.needSiwes){
+      opts.push(opt('Do SIWES / IT day 🏭', `${U.siwes || 0}/3 days · 6 hrs · -25 energy · ${fmt(5000)} stipend`, () => {
+        state.daily.siwes = true; U.siwes = (U.siwes || 0) + 1; gain('energy', -25); gain('hunger', -12); advanceTime(360); state.money += 5000;
+        if (U.siwes >= 3){ U.needSiwes = false; gain('rep', 3); result('SIWES completed 🏭', '<p>Your logbook has been signed. You can now pay your 400L fees at Unity University.</p>'); return false; }
+        toast(`SIWES day ${U.siwes}/3 done. Stipend: ₦5,000.`, 'good');
+      }, state.daily.siwes ? 'One SIWES day per day.' : !inHours(8, 16) ? 'SIWES runs 8am to 4pm.' : state.energy < 25 ? 'Too tired (need 25 energy).' : null, 'cur'));
+    }
+    if (j){
+      const why = state.daily.worked ? 'You already worked a shift today.' : !inHours(6, 18) ? 'Shifts start between 6am and 6pm.' : state.energy < j.energy ? `You are too tired. You need ${j.energy} energy.` : (j.needsOkada && !state.hasOkada) ? 'You need an okada for this job.' : null;
+      opts.push(opt('Work a shift 💼', `${j.name} · ${fmt(j.pay)} · ${j.hours} hrs · -${j.energy} energy`, () => {
+        state.daily.worked = true; gain('energy', -j.energy); gain('hunger', -15); advanceTime(j.hours * 60);
+        const bonus = Math.round(j.pay * (state.rep - 50) / 500), pay = j.pay + bonus;
+        state.money += pay; state.earned += pay; state.shifts++; gain('rep', 1);
+        toast(`Shift done! You earned ${fmt(pay)}${bonus > 0 ? ' (incl. reputation bonus)' : ''}.`, 'good');
+      }, why, 'cur'));
+      opts.push(opt('Resign 🚪', 'Quit your current job', () => { state.job = null; toast('You resigned.', 'info'); }));
+    }
+    JOBS.forEach(job => {
+      if (state.job === job.id) return;
+      const reqs = [];
+      if (job.dept) reqs.push(`${DEPTS[job.dept].name} degree`); else if (job.degree) reqs.push('Any degree');
+      if (job.nysc) reqs.push('NYSC'); if (job.cv) reqs.push('CV');
+      if (job.needsOkada) reqs.push('Own okada');
+      opts.push(opt(`${job.interview ? 'Apply' : 'Take job'}: ${job.name}`, `${fmt(job.pay)}/shift · ${reqs.length ? reqs.join(', ') : 'No requirement'}${job.interview ? ' · Interview' : ''}`, () => {
+        if (job.interview){ startInterview(job); return false; }
+        state.job = job.id; gain('rep', 1); toast(`You got the job: ${job.name}! Work your shift here daily.`, 'good');
+      }, jobBlock(job)));
+    });
+    return {
+      title: 'Lagos Business Hub 💼', sub: 'Job openings, interviews (8am to 4pm), daily shifts (6am to 6pm) and SIWES placements.',
+      body: `<div class="kv"><b>Current job</b><span>${j ? j.name : 'Unemployed'}</span><b>Qualification</b><span>${state.degree ? `B.Sc. ${DEPTS[state.degree.dept].name} (${state.degree.cls})` : state.uni ? `Student, ${state.uni.level}L` : 'SSCE'}</span><b>NYSC</b><span>${state.nysc >= 3 ? 'Completed ✅' : 'Not completed'}</span><b>CV</b><span>${state.cv ? 'Printed ✅' : 'Not printed'}</span><b>Total earned</b><span>${fmt(state.earned)}</span></div>`,
+      options: opts
+    };
+  },
+
+  nysc: () => {
+    const open = inHours(8, 16), closed = 'The secretariat is open 8am to 4pm.';
+    const opts = [];
+    let body = `<div class="kv"><b>Status</b><span>${['Not registered','Registered (camp pending)','Serving at PPA','Completed ✅'][state.nysc]}</span><b>PPA days</b><span>${state.ppa}/4</span></div>`;
+    if (!state.degree) body += '<div class="warn">You need a university degree before you can serve.</div>';
+    if (state.nysc === 0) opts.push(opt('Register for NYSC 📝', 'Free · Needs degree and NIN', () => { state.nysc = 1; advanceTime(60); toast('Registered! Your call-up letter is ready. Go to camp.', 'good'); }, !state.degree ? 'You need a degree first.' : !state.nin ? 'Register your NIN first.' : !open ? closed : null));
+    if (state.nysc === 1) opts.push(opt('Go to orientation camp ⛺', '3 weeks (1 day in game) · -30 energy · +3 rep', () => {
+      advanceTime(1440); state.nysc = 2; gain('energy', -30); gain('hunger', -20); gain('rep', 3);
+      result('Camp completed ⛺', '<p>Parades, man-o-war drills and mammy market. You survived camp!</p><p>You have been posted to a PPA. Report here to serve your 4 PPA days. Allawee is ₦77,000 every 2 days served.</p>');
+      return false;
+    }, !open ? closed : null));
+    if (state.nysc === 2){
+      if (state.ppa < 4) opts.push(opt('Serve at PPA 🏫', `${state.ppa}/4 days · 8 hrs · -25 energy`, () => {
+        state.daily.ppa = true; state.ppa++; gain('energy', -25); gain('hunger', -15); advanceTime(480); gain('rep', 1);
+        if (state.ppa % 2 === 0){ state.money += 77000; toast('Allawee don land! +₦77,000', 'good'); }
+        else toast(`PPA day ${state.ppa}/4 done.`, 'good');
+      }, state.daily.ppa ? 'One PPA day per day.' : !open ? closed : state.energy < 25 ? 'Too tired (need 25 energy).' : null, 'cur'));
+      else opts.push(opt('Collect discharge certificate 📜', 'Passing out parade', () => { state.nysc = 3; gain('rep', 5); result('Service completed 📜', '<p>You have received your <b>Certificate of National Service</b>. Print your CV at the Cyber Cafe and start applying for jobs!</p>'); return false; }, open ? null : closed, 'cur'));
+    }
+    if (state.nysc === 3) opts.push(opt('Attend CDS meeting 🤝', 'Community service · +2 rep', () => { state.daily.cds = true; gain('rep', 2); advanceTime(120); toast('You helped clean a local school. Respect!', 'good'); }, state.daily.cds ? 'Already attended today.' : !open ? closed : null));
+    return {title:'NYSC Secretariat 🇳🇬', sub:'National Youth Service Corps. Serve your fatherland.', body, options:opts};
+  },
+
+  cyber: () => {
+    const open = hour() >= 8 || hour() < 2;
+    const yahooCount = state.daily.yahoo || 0;
+    return {
+      title: 'Cyber Cafe 💻', sub: open ? 'Open 8am to 2am. Fast browsing, printing and... other things.' : 'Closed. Opens 8am.',
+      body: `<div class="kv"><b>CV</b><span>${state.cv ? 'Printed ✅' : 'Not printed'}</span>${state.heat > 0 ? `<b>Police heat</b><span style="color:#ff8a8a">${Math.round(state.heat)}/100</span>` : ''}</div>${state.heatNews ? '<div class="warn">📰 News today: police announced a crackdown on internet fraud. Raids are more likely.</div>' : ''}`,
+      options: [
+        opt('Print your CV 📄', `${fmt(1000)} · Needed for professional jobs`, () => { if (!spend(1000)) return; state.cv = true; advanceTime(30); toast('CV printed. You are ready for interviews!', 'good'); }, !open ? 'The cafe is closed.' : state.cv ? 'You already have a printed CV.' : null),
+        opt('Browse social media 📲', `${fmt(500)} · 1 hour · +5 energy`, () => { if (!spend(500)) return; advanceTime(60); gain('energy', 5); toast(pick(['You watched skits for one hour. You laughed tire.', 'Twitter (X) is on fire today!', 'You saw your classmate flexing in Dubai.']), 'good'); }, open ? null : 'The cafe is closed.'),
+        opt('Do Yahoo Yahoo (fraud) ⚠️', 'Big money, big risk · 4 hrs · Raises police heat', () => {
+          state.daily.yahoo = yahooCount + 1;
+          advanceTime(240); gain('energy', -15); gain('hunger', -10);
+          state.heat = clamp(state.heat + rint(18, 35) + (state.heatNews ? 10 : 0), 0, 100);
+          if (Math.random() < 0.5){
+            const amt = Math.round(rint(150000, 900000) / 1000) * 1000;
+            state.money += amt; state.yahooHits++;
+            toast(`Client don pay! You "made" ${fmt(amt)}. Police heat is rising 🚨`, 'good');
+          } else toast('The mugu no fall for am. You wasted 4 hours.', 'bad');
+          const raid = state.heat / 220 + (state.heatNews ? 0.12 : 0);
+          if (Math.random() < raid){ arrest('Police raided the cyber cafe during your Yahoo operation!'); return false; }
+        }, !open ? 'The cafe is closed.' : yahooCount >= 2 ? 'Even Yahoo boys rest. Max 2 per day.' : state.energy < 15 ? 'Too tired (need 15 energy).' : null, 'danger')
+      ]
+    };
+  },
+
+  hustle: () => {
+    const opts = [];
+    HUSTLES.forEach(h => {
+      opts.push(opt(h.name, `${fmt(h.min)} to ${fmt(h.max)} · ${h.hours} hrs · -${h.energy} energy`, () => {
+        state.daily.hustle = true; gain('energy', -h.energy); gain('hunger', -10); advanceTime(h.hours * 60);
+        const amt = Math.round(rint(h.min, h.max) / 100) * 100;
+        state.money += amt; state.hustleEarned += amt;
+        toast(`${h.name}: you made ${fmt(amt)}.`, 'good');
+      }, hustleBlock(h)));
+      if (h.kit && !state.kits[h.kit]) opts.push(opt(`Buy ${h.kitName}`, fmt(h.kitCost), () => { if (!spend(h.kitCost)) return; state.kits[h.kit] = true; toast(`You bought a ${h.kitName}. You can now run that hustle.`, 'good'); }, null, 'hint'));
+      if (h.skill && !state.skills[h.skill]) opts.push(opt(`Learn: ${h.skillName}`, `${fmt(h.skillCost)} · 6 hrs`, () => { if (!spend(h.skillCost)) return; state.skills[h.skill] = true; advanceTime(360); gain('energy', -15); toast(`Training complete! You can now do ${h.name}.`, 'good'); }, !inHours(8, 16) ? 'Training runs 8am to 4pm.' : null, 'hint'));
+    });
+    return {
+      title: 'Hustle Hub 🔥', sub: 'Legit side hustles. One hustle per day, 7am to 9pm.',
+      body: `<div class="kv"><b>Total hustle income</b><span>${fmt(state.hustleEarned)}</span></div>`,
+      options: opts
+    };
+  },
+
+  police: () => ({
+    title: 'Police Station 👮🏾', sub: 'Police is your friend. (Abi?)',
+    body: `<div class="kv"><b>Times arrested</b><span>${state.arrests}</span><b>Heat level</b><span>${Math.round(state.heat)}/100</span></div><p style="margin-top:8px">Heat rises when you do Yahoo and falls by 5 each day. High heat means more stop-and-search and raids.</p>`,
+    options: [
+      opt('Volunteer: community policing 🦺', '3 hrs · -15 energy · +2 rep', () => { state.daily.volunteer = true; advanceTime(180); gain('energy', -15); gain('rep', 2); toast('You helped direct traffic. The officers like you.', 'good'); }, state.daily.volunteer ? 'Already volunteered today.' : !inHours(8, 18) ? 'Volunteering runs 8am to 6pm.' : null),
+      opt('Get a police report 📄', `${fmt(5000)} · Clean record bonus`, () => { if (!spend(5000)) return; state.daily.report = true; gain('rep', 1); toast('Police character certificate collected.', 'good'); }, state.heat > 20 ? 'They are looking at you suspiciously. Not today.' : state.daily.report ? 'Already collected today.' : null)
+    ]
+  }),
+
+  arrest: (d) => {
+    const bribe = 50000 + Math.round(state.heat) * 3000;
+    return {
+      title: '🚔 You have been arrested!', sub: d.reason,
+      body: `<p>You are in a cell at the Police Station.${d.seized ? ` Officers seized <b>${fmt(d.seized)}</b> from your wallet as "exhibit".` : ''}</p><div class="kv"><b>Wallet</b><span>${fmt(state.money)}</span><b>Heat</b><span>${Math.round(state.heat)}/100</span></div>`,
+      options: [
+        opt('Bribe the officer 💸', `${fmt(bribe)} · May or may not work`, () => {
+          if (!spend(bribe)) return;
+          d.bribeTried = true;
+          if (Math.random() < 0.6){ state.heat = clamp(state.heat - 15, 0, 100); gain('rep', -2); result('Released 😮‍💨', '<p>"Oya go, and make we no see you again." You walked out of the station.</p>'); return false; }
+          toast('Oga collected the money and said e no reach! You are still in the cell.', 'bad');
+        }, d.bribeTried ? 'The officer already "collected" from you.' : null),
+        opt('Pay bail ⚖️', `${fmt(250000)} · Official bail`, () => { if (!spend(250000)) return; state.heat = clamp(state.heat - 25, 0, 100); gain('rep', -8); result('Out on bail ⚖️', '<p>You paid your bail and walked out. Your name is now in the police records.</p>'); return false; }),
+        opt('Hire a lawyer 👨🏾‍⚖️', `${fmt(500000)} · Case dismissed`, () => { if (!spend(500000)) return; state.heat = 0; gain('rep', -2); result('Case dismissed 👨🏾‍⚖️', '<p>Your lawyer got the case thrown out for lack of evidence. Clean slate... for now.</p>'); return false; }),
+        opt('Stay in the cell ⛓️', 'Detained 3 days · Lose your job', () => { detain(); return false; }, null, 'danger')
+      ]
+    };
+  },
+
+  checkpoint: () => {
+    const settle = 10000 + Math.round(state.heat) * 300;
+    return {
+      title: '🚓 Police Stop and Search', sub: '"Oga, stop there! Bring your phone. Wetin you dey do for this area?"',
+      body: state.heat >= 35 ? '<div class="warn">Your phone has Yahoo chats on it. If they search it, you are in trouble.</div>' : '<p>You have nothing to hide... hopefully.</p>',
+      options: [
+        opt('Comply and unlock your phone 📱', 'Let them search', () => { checkpointComply(); return false; }),
+        opt('Settle them 💵', fmt(settle), () => { if (!spend(settle)) return; state.heat = clamp(state.heat - 5, 0, 100); result('Settled 💵', '<p>"Thank you sir. Enjoy your day."</p>'); return false; }),
+        opt('Run! 🏃🏾', 'Risky. Depends on your energy', () => {
+          if (Math.random() < 0.3 + state.energy / 400){ state.heat = clamp(state.heat + 10, 0, 100); gain('energy', -20); result('You escaped! 🏃🏾', '<p>You disappeared into a crowded bus stop. They will remember your face though. Heat increased.</p>'); }
+          else arrest('You tried to run from a police checkpoint.');
+          return false;
+        }, null, 'danger')
+      ]
+    };
+  },
+
+  news: () => {
+    const bought = state.daily.paper;
+    return {
+      title: 'Newsstand 📰', sub: 'Abeg buy paper, no be free reading!',
+      body: bought ? `<b>Today's headlines (Day ${state.day})</b><ul>${state.news.map(n => `<li>${n}</li>`).join('')}</ul><div style="margin-top:6px;opacity:.8">Food price index today: <b>${Math.round(state.priceMod * 100)}%</b></div>` : '',
+      options: [opt("Buy today's newspaper 📰", fmt(300), () => { if (!spend(300)) return; state.daily.paper = true; toast('You bought the paper.', 'good'); }, bought ? "You already have today's paper." : null)]
+    };
+  },
+
+  lg: () => {
+    const open = inHours(8, 16);
+    const levyDue = state.day - state.levyDay >= 7;
+    return {
+      title: 'Local Government Secretariat 🏛️', sub: open ? 'Civic centre open 8am to 4pm.' : 'Office is closed. Opens 8am.',
+      body: `<div class="kv"><b>NIN</b><span>${state.nin ? 'Registered ✅' : 'Not registered ❌'}</span><b>Development levy</b><span>${levyDue ? 'Due' : 'Paid this week ✅'}</span></div>`,
+      options: [
+        opt('Register NIN 🪪', 'Free · 2 hours · Needed for bank and NYSC', () => { state.nin = true; advanceTime(120); gain('rep', 5); toast('NIN registered! You can now bank and serve NYSC.', 'good'); }, !open ? 'The office is closed.' : state.nin ? 'You already have an NIN.' : null, state.nin ? '' : 'cur'),
+        opt('Pay development levy 🏛️', `${fmt(10000)} · Weekly · +3 rep`, () => { if (!spend(10000)) return; state.levyDay = state.day; gain('rep', 3); toast('Levy paid. Good citizen!', 'good'); }, !open ? 'The office is closed.' : !levyDue ? 'Already paid this week.' : null),
+        opt('Attend town hall meeting 🗣️', '2 hours · -10 energy · +2 rep', () => { state.daily.townhall = true; advanceTime(120); gain('energy', -10); gain('rep', 2); toast('You spoke at the town hall. People are noticing you.', 'good'); }, !inHours(10, 16) ? 'Town hall holds 10am to 4pm.' : state.daily.townhall ? 'Only one meeting per day.' : null)
+      ]
+    };
+  },
+
+  church: () => worship('church', 'Grace Assembly ⛪', 'Pray 🙏'),
+  mosque: () => worship('mosque', 'Central Mosque 🕌', 'Pray 🤲'),
+
+  estate: () => ({
+    title: 'Shelter Real Estate 🏠', sub: 'Move to a better place. You pay first week rent + 10% agent fee.',
+    body: `<div class="kv"><b>Current home</b><span>${HOUSING[state.housing].name}</span><b>Next rent</b><span>Day ${state.rentDueDay}</span></div>`,
+    options: HOUSING.map((h, i) => {
+      const cost = Math.round(h.rent * 1.1), cur = i === state.housing;
+      return opt(`${cur ? '✅ ' : ''}${h.name}`, `${fmt(h.rent)}/week · Sleep +${h.sleep} energy${cur ? ' · Current' : ` · Move-in ${fmt(cost)}`}`, () => {
+        if (!spend(cost)) return;
+        state.housing = i; state.rentDueDay = state.day + 7; state.rentStrikes = 0;
+        if (i > state.maxHousing){ gain('rep', h.rep); state.maxHousing = i; }
+        toast(`You moved into a ${h.name}!`, 'good');
+      }, cur ? 'You already live here.' : null, cur ? 'cur' : '');
+    })
+  }),
+
+  barber: () => ({
+    title: 'Kutz Barbing Salon 💈', sub: 'Fresh cut, fresh confidence. Look sharp for interviews!',
+    body: state.daily.groomed ? '<p>You are looking sharp today. Interview panels will notice.</p>' : '',
+    options: [
+      opt('Low cut ✂️', `${fmt(2500)} · +2 rep · Interview bonus today`, () => { if (!spend(2500)) return; state.daily.groomed = true; gain('rep', 2); advanceTime(30); toast('Sharp! You look clean.', 'good'); }, state.daily.groomed ? 'You already got groomed today.' : null),
+      opt('Full grooming 💈', `${fmt(6000)} · +4 rep · Interview bonus today`, () => { if (!spend(6000)) return; state.daily.groomed = true; gain('rep', 4); advanceTime(60); toast('Correct guy! Everybody dey look you.', 'good'); }, state.daily.groomed ? 'You already got groomed today.' : null)
+    ]
+  }),
+
+  motors: () => ({
+    title: 'Oga Motors 🏍️', sub: 'Vehicles for every level of hustle.',
+    body: state.hasOkada ? 'You own an okada. Use the menu (☰) to switch between riding and walking.' : '',
+    options: [
+      opt('Okada (Bajaj Boxer) 🏍️', `${fmt(850000)} · Faster movement · Unlocks Okada Rider job`, () => {
+        if (!spend(850000)) return;
+        state.hasOkada = true; state.riding = true; gain('rep', 2); toast('You bought an okada! You are now riding. Vroom!', 'good');
+      }, state.hasOkada ? 'You already own an okada.' : null),
+      opt('Keke Napep 🛺', fmt(2800000), () => {}, 'Keke and commercial transport arrive in a future update.'),
+      opt('Toyota Corolla (2010) 🚗', fmt(9500000), () => {}, 'Cars arrive in a future update.')
+    ]
+  }),
+
+  joint: () => {
+    const open = hour() >= 12 || hour() < 2;
+    return {
+      title: 'Chill Spot 🍻', sub: open ? 'Pepper soup, football and good vibes. Open 12pm to 2am.' : 'Closed. Opens 12pm.',
+      body: '',
+      options: [
+        opt('Watch football ⚽', `${fmt(1000)} · 2 hours · +10 energy`, () => { if (!spend(1000)) return; advanceTime(120); gain('energy', 10); toast(pick(['GOAL!!! The whole place scatter!', 'Na draw. Everybody vex.', 'Your team won! You dey happy.']), 'good'); }, open ? null : 'Chill Spot is closed.'),
+        opt('Pepper soup 🍲', `${fmt(price(3000))} · +35 food · +10 energy`, () => { if (!spend(price(3000))) return; advanceTime(30); gain('hunger', 35); gain('energy', 10); toast('That pepper soup clear your eye!', 'good'); }, open ? null : 'Chill Spot is closed.'),
+        opt('Buy drinks for the boys 🍻', `${fmt(10000)} · +4 rep · -5 energy`, () => { if (!spend(10000)) return; state.daily.round = true; advanceTime(60); gain('rep', 4); gain('energy', -5); toast('Big man! Everybody dey hail you.', 'good'); }, !open ? 'Chill Spot is closed.' : state.daily.round ? 'You already bought a round today.' : null)
+      ]
+    };
+  },
+
+  npc: (n) => {
+    if (!panelState.line) panelState.line = pick(n.police ? POLICE_LINES : LINES);
+    return {
+      title: n.name, sub: n.role,
+      body: `<div class="qtext">"${panelState.line}"</div>`,
+      options: [
+        opt('Greet 👋', '+1 rep (once per person, per day)', () => { n.greetDay = state.day; gain('rep', 1); panelState.line = pick(['Ehen! Good to see you.', 'Thank you, my person!', 'You too, safe journey.', 'God bless you.']); toast(`You greeted ${n.name}.`, 'good'); }, n.greetDay === state.day ? `You already greeted ${n.name} today.` : null),
+        opt('Ask for advice 💡', 'Get a life tip', () => { panelState.line = pick(TIPS); }),
+        opt('Bye 👋', 'Continue your day', () => { closePanel(); return false; })
+      ]
+    };
+  },
+
+  quiz: () => {
+    const Q = quiz.cfg.questions[quiz.i];
+    const opts = [];
+    Q.opts.forEach((o, k) => { if (!quiz.removed.includes(k)) opts.push(opt(o, '', () => answerQuiz(k))); });
+    if (quiz.hints > 0 && !quiz.removed.length) opts.push(opt(`💡 Use hint (${quiz.hints} left)`, 'Removes 2 wrong answers', () => {
+      quiz.hints--;
+      quiz.removed = shuffle([0, 1, 2, 3].filter(k => k !== Q.ans)).slice(0, 2);
+    }, null, 'hint'));
+    return {title:quiz.cfg.title, sub:`Question ${quiz.i + 1} of ${quiz.cfg.questions.length} · Correct so far: ${quiz.score}`, body:`<div class="qtext">${Q.q}</div>`, options:opts};
+  },
+
+  result: (d) => ({title:d.title, sub:'', body:d.body, options:d.options}),
+
+  inventory: () => {
+    const keys = Object.keys(state.inv).filter(k => state.inv[k] > 0);
+    return {
+      title: 'Your Bag 🎒', sub: keys.length ? 'Tap an item to eat or use it.' : 'Your bag is empty. Buy food at Oja Market or medicine at the hospital.',
+      body: `<div class="kv"><b>🍛 Hunger</b><span>${Math.round(state.hunger)}/100</span><b>⚡ Energy</b><span>${Math.round(state.energy)}/100</span><b>❤️ Health</b><span>${Math.round(state.health)}/100</span></div>`,
+      options: keys.map(k => {
+        const it = ITEMS[k];
+        const fx = [it.food ? `+${it.food} food` : '', it.energy ? `+${it.energy} energy` : '', it.health ? `+${it.health} health` : ''].filter(Boolean).join(' · ');
+        return opt(`${it.food ? 'Eat' : 'Use'} ${it.name} ×${state.inv[k]}`, fx, () => {
+          state.inv[k]--; gain('hunger', it.food || 0); gain('energy', it.energy || 0); gain('health', it.health || 0);
+          toast(`${it.food ? 'Ate' : 'Used'} ${it.name}.`, 'good');
+        });
+      })
+    };
+  },
+
+  guide: () => {
+    const U = state.uni;
+    const steps = [
+      ['Register NIN (Local Govt Secretariat)', state.nin],
+      ['Pass JAMB with 200+ (Unity University)', !!state.jamb],
+      ['Choose a department', !!(U || state.degree)],
+      ['Pass 100L to 300L exams', !!(state.degree || (U && U.level >= 400))],
+      ['Complete SIWES (Lagos Business Hub)', !!(state.degree || (U && U.level >= 400 && !U.needSiwes))],
+      ['Pass 400L and graduate', !!state.degree],
+      ['NYSC camp and PPA (NYSC Secretariat)', state.nysc >= 3],
+      ['Print CV (Cyber Cafe)', state.cv],
+      ['Pass an interview and get a job', !!state.job && !!JOB[state.job].interview]
+    ];
+    return {
+      title: 'Life Guide 🧭', sub: 'Your path from JJC to big man/woman.',
+      body: `<ol>${steps.map(([t, d]) => `<li>${d ? '✅' : '⬜'} ${t}</li>`).join('')}</ol>
+        <div class="note"><b>🍛 How to eat:</b> go to Mama Nkechi's Buka (7am to 9pm) for hot food, or buy food at Oja Market and eat it from your Bag (press I). Sleeping makes you hungry, so eat breakfast.</div>
+        <div class="note"><b>💰 Money:</b> do one side hustle per day at Hustle Hub. Unskilled jobs (labourer, sales rep) need no degree.</div>
+        <div class="warn"><b>⚠️ Yahoo:</b> fast money at the Cyber Cafe, but it raises police heat. Expect stop-and-search, raids, arrests, bribes and bail.</div>`,
+      options: [opt('Back', 'Return to menu', () => { openPanel('menu'); return false; })]
+    };
+  },
+
+  menu: () => ({
+    title: 'Menu', sub: `Day ${state.day} · ${WEEKDAYS[(state.day - 1) % 7]}`,
+    body: '',
+    options: [
+      opt('Life Guide 🧭', 'Your path and how to eat', () => { openPanel('guide'); return false; }),
+      opt('Profile 👤', 'Your life at a glance', () => { openPanel('profile'); return false; }),
+      opt('Bag 🎒', 'Eat food and use medicine', () => { openPanel('inventory'); return false; }),
+      opt(state.riding ? 'Get off okada 🚶' : 'Ride okada 🏍️', state.hasOkada ? 'Switch movement mode' : 'Buy one at Oga Motors', () => { state.riding = !state.riding; toast(state.riding ? 'You are riding your okada.' : 'You are walking.', 'info'); }, state.hasOkada ? null : 'You do not own an okada yet.'),
+      opt('Save game 💾', 'Also saves automatically', () => { saveGame(); }),
+      opt('Full screen ⛶', 'Better on mobile', () => { goFullscreen(); }),
+      opt('How to play ❓', 'Controls and tips', () => { openPanel('intro'); return false; }),
+      opt('Start new life 🔄', 'Erases your current save', () => { openPanel('confirmReset'); return false; }, null, 'danger')
+    ]
+  }),
+
+  profile: () => {
+    const j = state.job ? JOB[state.job] : null, U = state.uni, d = state.degree;
+    return {
+      title: 'Your Profile 👤', sub: 'Life in the city so far',
+      body: `<div class="kv">
+        <b>Wallet</b><span>${fmt(state.money)}</span>
+        <b>Bank savings</b><span>${fmt(state.bank)}</span>
+        <b>Health / Energy / Food</b><span>${Math.round(state.health)} / ${Math.round(state.energy)} / ${Math.round(state.hunger)}</span>
+        <b>Reputation</b><span>${Math.round(state.rep)}/100</span>
+        <b>Education</b><span>${d ? `B.Sc. ${DEPTS[d.dept].name} (${d.cls})` : U ? `${DEPTS[U.dept].name}, ${U.level}L${U.carry ? ' (carryover)' : ''}` : state.jamb ? `JAMB ${state.jamb}, no department yet` : 'SSCE'}</span>
+        <b>NYSC</b><span>${['Not started','Registered','Serving','Completed'][state.nysc]}</span>
+        <b>Job</b><span>${j ? j.name : 'Unemployed'}</span>
+        <b>Skills</b><span>${Object.keys(state.skills).map(s => HUSTLES.find(h => h.skill === s).skillName.replace(' training', '')).join(', ') || 'None'}</span>
+        <b>Home</b><span>${HOUSING[state.housing].name}</span>
+        <b>Next rent</b><span>Day ${state.rentDueDay} · ${fmt(HOUSING[state.housing].rent)}</span>
+        <b>Vehicle</b><span>${state.hasOkada ? 'Okada' : 'None'}</span>
+        <b>Earned (jobs / hustles)</b><span>${fmt(state.earned)} / ${fmt(state.hustleEarned)}</span>
+        <b>Arrests</b><span>${state.arrests}</span>
+      </div>`,
+      options: [opt('Back', 'Return to menu', () => { openPanel('menu'); return false; })]
+    };
+  },
+
+  confirmReset: () => ({
+    title: 'Start a new life?', sub: 'This deletes your current progress. It cannot be undone.',
+    body: '',
+    options: [
+      opt('Yes, start over', 'Fresh start with ₦2,000,000', () => {
+        try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+        state = newState(); genNews(); player.x = state.px; player.y = state.py;
+        npcs.forEach(n => n.greetDay = 0);
+        openPanel('intro'); return false;
+      }, null, 'danger'),
+      opt('No, go back', '', () => { openPanel('menu'); return false; })
+    ]
+  })
+};
+
+function worship(id, name, prayLabel){
+  const key = 'pray_' + id, offKey = 'off_' + id;
+  return {
+    title: name, sub: 'A place of peace in the busy city.',
+    body: '',
+    options: [
+      opt(prayLabel, '1 hour · +1 rep · +5 energy', () => { state.daily[key] = true; advanceTime(60); gain('rep', 1); gain('energy', 5); toast('You feel at peace.', 'good'); }, state.daily[key] ? 'You already prayed here today.' : null),
+      opt('Give an offering 💝', `${fmt(2000)} · +2 rep`, () => { if (!spend(2000)) return; state.daily[offKey] = true; gain('rep', 2); toast('God bless you!', 'good'); }, state.daily[offKey] ? 'You already gave today.' : null)
+    ]
+  };
+}
+
+const pTitle = $('pTitle'), pSub = $('pSub'), pBody = $('pBody'), pOpts = $('pOpts'), panelEl = $('panel');
+function openPanel(kind, data){
+  panelState = {kind, data};
+  paused = true;
+  keys.clear();
+  resetJoy();
+  renderPanel();
+  panelEl.classList.add('show');
+  panelEl.querySelector('.box').scrollTop = 0;
+}
+function closePanel(){
+  if (panelState){
+    const k = panelState.kind;
+    if (k === 'quiz' && quiz){ finishQuiz(); return; }
+    if (k === 'arrest'){ panelState = null; detain(); return; }
+    if (k === 'checkpoint'){ panelState = null; checkpointComply(); return; }
+  }
+  panelEl.classList.remove('show');
+  panelState = null; paused = false;
+  saveGame(true);
+}
+function renderPanel(){
+  if (!panelState) return;
+  const p = PANELS[panelState.kind](panelState.data);
+  pTitle.textContent = p.title;
+  pSub.textContent = p.sub || '';
+  pBody.innerHTML = p.body || '';
+  pOpts.innerHTML = '';
+  p.options.forEach(o => {
+    const b = document.createElement('button');
+    b.className = 'opt' + (o.why ? ' dis' : '') + (o.cls ? ' ' + o.cls : '');
+    b.innerHTML = `<b>${o.label}</b>${o.note ? `<span>${o.note}</span>` : ''}`;
+    b.addEventListener('click', () => {
+      if (o.why){ toast(o.why, 'bad'); return; }
+      const r = o.action();
+      updateHUD();
+      if (r !== false && panelState) renderPanel();
+      saveGame(true);
+    });
+    pOpts.appendChild(b);
+  });
+}
+$('pClose').addEventListener('click', closePanel);
+panelEl.addEventListener('click', e => { if (e.target === panelEl) closePanel(); });
+$('menuBtn').addEventListener('click', () => { if (panelState) closePanel(); else openPanel('menu'); });
+$('bagBtn').addEventListener('click', () => { if (panelState && panelState.kind === 'inventory') closePanel(); else if (!panelState) openPanel('inventory'); });
+
+function goFullscreen(){
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (req){
+    Promise.resolve(req.call(el)).then(() => {
+      try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch (e) {}
+    }).catch(() => toast('Full screen is not available on this browser.', 'bad'));
+  } else toast('Full screen is not available on this browser.', 'bad');
+}
+
+/* =========================================================
+   WALKING LOGIC (2D collision on the ground plane)
+   ========================================================= */
+function free(x, y, rad){
+  const r = rad || 11;
+  if (x - r < 0 || y - r < 0 || x + r > WW || y + r > WH) return false;
+  for (const s of SOLIDS){
+    const cx = clamp(x, s.x, s.x + s.w), cy = clamp(y, s.y, s.y + s.h);
+    if ((x - cx) * (x - cx) + (y - cy) * (y - cy) < r * r) return false;
+  }
+  return true;
+}
+function randomWalkTile(nearX, nearY){
+  for (let i = 0; i < 30; i++){
+    let c, r;
+    if (nearX !== undefined){ c = Math.floor(nearX / T) + Math.floor((Math.random() - 0.5) * 16); r = Math.floor(nearY / T) + Math.floor((Math.random() - 0.5) * 16); }
+    else { c = Math.floor(Math.random() * COLS); r = Math.floor(Math.random() * ROWS); }
+    if (c < 0 || r < 0 || c >= COLS || r >= ROWS) continue;
+    if (!(isRoad(c, r) || nearRoad(c, r))) continue;
+    const x = (c + 0.5) * T, y = (r + 0.5) * T;
+    if (free(x, y, 10)) return {x, y};
+  }
+  return {x:B.home.frontX, y:B.home.frontY};
+}
+
+/* =========================================================
+   3D ENGINE
+   ========================================================= */
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+const SKY_DAY = new THREE.Color(0x8fd0ff), SKY_DUSK = new THREE.Color(0xf0a070), SKY_NIGHT = new THREE.Color(0x0a1030);
+scene.background = SKY_DAY.clone();
+scene.fog = new THREE.Fog(0x8fd0ff, 50, 120);
+const camera = new THREE.PerspectiveCamera(50, 1, 0.3, 300);
+function resize(){
+  vw = window.innerWidth; vh = window.innerHeight;
+  renderer.setSize(vw, vh, false);
+  camera.aspect = vw / vh; camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize); resize();
+
+const hemi = new THREE.HemisphereLight(0xdff0ff, 0x4a6b3a, 0.7); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff1d6, 0.9);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+Object.assign(sun.shadow.camera, {left:-40, right:40, top:40, bottom:-40, near:1, far:160});
+sun.shadow.bias = -0.0008;
+scene.add(sun); scene.add(sun.target);
+
+const matCache = {};
+const M = (color, extra) => {
+  const key = color + (extra ? JSON.stringify(extra) : '');
+  if (!matCache[key]) matCache[key] = new THREE.MeshLambertMaterial(Object.assign({color:new THREE.Color(color)}, extra || {}));
+  return matCache[key];
+};
+
+/* Ground */
+const groundTex = new THREE.CanvasTexture(groundCanvas);
+groundTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+const groundMesh = new THREE.Mesh(new THREE.PlaneGeometry(WW * S, WH * S), new THREE.MeshLambertMaterial({map:groundTex}));
+groundMesh.rotation.x = -Math.PI / 2;
+groundMesh.position.set(WW * S / 2, 0, WH * S / 2);
+groundMesh.receiveShadow = true;
+scene.add(groundMesh);
+const outer = new THREE.Mesh(new THREE.PlaneGeometry(700, 700), M('#3f7f36'));
+outer.rotation.x = -Math.PI / 2; outer.position.set(WW * S / 2, -0.05, WH * S / 2);
+scene.add(outer);
+
+/* Wall textures */
+function winCanvas(lit){
+  const c = document.createElement('canvas'); c.width = 64; c.height = 64;
+  const g = c.getContext('2d');
+  g.fillStyle = lit ? '#000' : '#fff'; g.fillRect(0, 0, 64, 64);
+  if (!lit){ g.fillStyle = 'rgba(0,0,0,.06)'; g.fillRect(0, 58, 64, 6); }
+  g.fillStyle = lit ? '#ffcf6b' : '#5d7d93'; g.fillRect(16, 14, 32, 30);
+  if (!lit){ g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(18, 16, 10, 26); g.fillStyle = '#d8d8d8'; g.fillRect(14, 44, 36, 4); }
+  return c;
+}
+const WIN_BASE = winCanvas(false), WIN_LIT = winCanvas(true);
+const WALL_MATS = [];
+function wallMat(color, rx, ry){
+  const map = new THREE.CanvasTexture(WIN_BASE); map.wrapS = map.wrapT = THREE.RepeatWrapping; map.repeat.set(rx, ry);
+  const em = new THREE.CanvasTexture(WIN_LIT); em.wrapS = em.wrapT = THREE.RepeatWrapping; em.repeat.set(rx, ry);
+  const m = new THREE.MeshLambertMaterial({color:new THREE.Color(color), map, emissive:new THREE.Color(0xffffff), emissiveMap:em, emissiveIntensity:0});
+  WALL_MATS.push(m);
+  return m;
+}
+function makeLabel(text, h, bg){
+  const fs = 44, c = document.createElement('canvas'), g = c.getContext('2d');
+  g.font = `800 ${fs}px system-ui,sans-serif`;
+  const tw = Math.ceil(g.measureText(text).width);
+  c.width = tw + 36; c.height = fs + 26;
+  g.font = `800 ${fs}px system-ui,sans-serif`;
+  g.fillStyle = bg || 'rgba(10,22,15,.85)';
+  if (g.roundRect){ g.beginPath(); g.roundRect(0, 0, c.width, c.height, 18); g.fill(); } else g.fillRect(0, 0, c.width, c.height);
+  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(text, c.width / 2, c.height / 2 + 2);
+  const tex = new THREE.CanvasTexture(c); tex.minFilter = THREE.LinearFilter;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, transparent:true}));
+  sp.scale.set(h * c.width / c.height, h, 1);
+  return sp;
+}
+
+/* Buildings */
+const OCC = [];
+function addBuilding(b){
+  const w = b.w * T * S, d = b.h * T * S, h = b.ht;
+  const cx = (b.x * T + b.w * T / 2) * S, cz = (b.y * T + b.h * T / 2) * S;
+  const grp = new THREE.Group(); scene.add(grp);
+  const ry = Math.max(1, Math.round(h / 3));
+  const fb = wallMat(b.color, Math.max(1, Math.round(w / 2.6)), ry);
+  const lr = wallMat(b.color, Math.max(1, Math.round(d / 2.6)), ry);
+  const top = M(b.roof);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), [lr, lr, top, top, fb, fb]);
+  body.position.set(cx, h / 2, cz); body.castShadow = true; body.receiveShadow = true;
+  grp.add(body);
+  let roofTop = h;
+  if (b.rt === 'pyramid'){
+    const rh = Math.min(w, d) * 0.35;
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(Math.SQRT1_2, 1, 4), M(b.roof, {flatShading:true}));
+    roof.rotation.y = Math.PI / 4; roof.scale.set(w * 1.12, rh, d * 1.12);
+    roof.position.set(cx, h + rh / 2, cz); roof.castShadow = true;
+    grp.add(roof); roofTop = h + rh;
+  } else {
+    const par = new THREE.Mesh(new THREE.BoxGeometry(w + 0.3, 0.45, d + 0.3), M(b.roof));
+    par.position.set(cx, h + 0.2, cz); par.castShadow = true; grp.add(par); roofTop = h + 0.45;
+  }
+  if (b.extra === 'spire'){
+    const tower = new THREE.Mesh(new THREE.BoxGeometry(1.6, 3, 1.6), M(b.color)); tower.position.set(cx, h + 1.5, cz + d / 4); tower.castShadow = true; grp.add(tower);
+    const sp = new THREE.Mesh(new THREE.ConeGeometry(1.2, 3.2, 4), M(b.roof, {flatShading:true})); sp.position.set(cx, h + 4.6, cz + d / 4); sp.rotation.y = Math.PI / 4; sp.castShadow = true; grp.add(sp);
+    const cr1 = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1, 0.15), M('#ffd23f')); cr1.position.set(cx, h + 6.7, cz + d / 4); grp.add(cr1);
+    const cr2 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.15, 0.15), M('#ffd23f')); cr2.position.set(cx, h + 6.85, cz + d / 4); grp.add(cr2);
+    roofTop = h + 7.2;
+  }
+  if (b.extra === 'dome'){
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(Math.min(w, d) * 0.32, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), M(b.roof)); dome.position.set(cx, h + 0.4, cz); dome.castShadow = true; grp.add(dome);
+    const min = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, h + 5, 8), M(b.color)); min.position.set(cx + w / 2 - 0.6, (h + 5) / 2, cz - d / 2 + 0.6); min.castShadow = true; grp.add(min);
+    const mt = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.4, 8), M(b.roof)); mt.position.set(cx + w / 2 - 0.6, h + 5.7, cz - d / 2 + 0.6); grp.add(mt);
+    roofTop = h + Math.min(w, d) * 0.32 + 0.4;
+  }
+  const dx = (b.doorC + 0.5) * T * S, sign = b.door === 's' ? 1 : -1, faceZ = cz + sign * d / 2;
+  const door = new THREE.Mesh(new THREE.BoxGeometry(1.3, 2.2, 0.14), M('#4a2c17')); door.position.set(dx, 1.1, faceZ + sign * 0.07); grp.add(door);
+  const awn = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.14, 1.1), M(b.roof)); awn.position.set(dx, 2.55, faceZ + sign * 0.55); awn.castShadow = true; grp.add(awn);
+  if (b.extra === 'cross'){
+    const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, 64, 64); g.fillStyle = '#d62828'; g.fillRect(24, 8, 16, 48); g.fillRect(8, 24, 48, 16);
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c)}));
+    pl.position.set(cx, h - 1.6, faceZ + 0.02); grp.add(pl);
+  }
+  const mats = [];
+  grp.traverse(o => {
+    if (!o.isMesh) return;
+    const conv = m => { if (WALL_MATS.includes(m)) { mats.push(m); return m; } const c = m.clone(); mats.push(c); return c; };
+    o.material = Array.isArray(o.material) ? o.material.map(conv) : conv(o.material);
+  });
+  OCC.push({grp, mats:[...new Set(mats)], x0:b.x * T * S - 0.3, x1:(b.x + b.w) * T * S + 0.3, z0:b.y * T * S - 0.3, z1:(b.y + b.h) * T * S + 0.3, top:roofTop, faded:false});
+  if (b.name){
+    const lab = makeLabel(b.name, 1.25);
+    lab.position.set(cx, roofTop + 1.4, cz); scene.add(lab);
+  }
+}
+[...BUILDINGS, ...DECOR].forEach(addBuilding);
+
+/* Market stalls in front of the market */
+(function(){
+  const b = B.market, cols = ['#e74c3c', '#f1c40f', '#27ae60'];
+  for (let i = 0; i < 3; i++){
+    const x = (b.x + 0.8 + i * 1.9) * T * S + 0.6, z = (b.y + b.h) * T * S + 0.9;
+    if (Math.abs(x - b.frontX * S) < 1.6) continue;
+    const t = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.8, 0.9), M('#8a5a2b')); t.position.set(x, 0.4, z); t.castShadow = true; scene.add(t);
+    const u = new THREE.Mesh(new THREE.ConeGeometry(1.3, 0.6, 4), M(cols[i], {flatShading:true})); u.position.set(x, 2.1, z); u.rotation.y = Math.PI / 4; scene.add(u);
+    const p = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.8, 5), M('#555')); p.position.set(x, 0.9, z); scene.add(p);
+  }
+})();
+
+/* Trees (instanced for speed) */
+(function(){
+  const dummy = new THREE.Object3D();
+  const trunkGeo = new THREE.CylinderGeometry(0.14, 0.2, 1.6, 6); trunkGeo.translate(0, 0.8, 0);
+  const leafGeo = new THREE.IcosahedronGeometry(1.15, 0); leafGeo.translate(0, 2.3, 0);
+  const coneGeo = new THREE.ConeGeometry(0.95, 2.8, 7); coneGeo.translate(0, 2.7, 0);
+  const rounds = TREES.filter(t => !t.cone), cones = TREES.filter(t => t.cone);
+  const trunks = new THREE.InstancedMesh(trunkGeo, M('#6b4423'), TREES.length);
+  const leaves = new THREE.InstancedMesh(leafGeo, M('#3d9a40', {flatShading:true}), rounds.length);
+  const conesM = new THREE.InstancedMesh(coneGeo, M('#2e7d32', {flatShading:true}), cones.length);
+  TREES.forEach((t, i) => { dummy.position.set(t.x * S, 0, t.y * S); dummy.rotation.set(0, t.rot, 0); dummy.scale.setScalar(t.s); dummy.updateMatrix(); trunks.setMatrixAt(i, dummy.matrix); });
+  rounds.forEach((t, i) => { dummy.position.set(t.x * S, 0, t.y * S); dummy.rotation.set(0, t.rot, 0); dummy.scale.setScalar(t.s); dummy.updateMatrix(); leaves.setMatrixAt(i, dummy.matrix); });
+  cones.forEach((t, i) => { dummy.position.set(t.x * S, 0, t.y * S); dummy.rotation.set(0, t.rot, 0); dummy.scale.setScalar(t.s); dummy.updateMatrix(); conesM.setMatrixAt(i, dummy.matrix); });
+  [trunks, leaves, conesM].forEach(m => { m.castShadow = true; scene.add(m); });
+})();
+
+/* Street lamps */
+const bulbMat = new THREE.MeshLambertMaterial({color:0xfff3c4, emissive:new THREE.Color(0xffd56b), emissiveIntensity:0});
+(function(){
+  const dummy = new THREE.Object3D();
+  const poleGeo = new THREE.CylinderGeometry(0.07, 0.09, 4, 6); poleGeo.translate(0, 2, 0);
+  const bulbGeo = new THREE.SphereGeometry(0.28, 8, 6); bulbGeo.translate(0, 4.1, 0);
+  const poles = new THREE.InstancedMesh(poleGeo, M('#3a3a3a'), LAMPS.length);
+  const bulbs = new THREE.InstancedMesh(bulbGeo, bulbMat, LAMPS.length);
+  LAMPS.forEach((l, i) => { dummy.position.set(l.x * S, 0, l.y * S); dummy.updateMatrix(); poles.setMatrixAt(i, dummy.matrix); bulbs.setMatrixAt(i, dummy.matrix); });
+  poles.castShadow = true; scene.add(poles); scene.add(bulbs);
+})();
+
+/* Cars */
+const headMat = new THREE.MeshLambertMaterial({color:0xfff6b0, emissive:new THREE.Color(0xfff6b0), emissiveIntensity:0});
+function makeCar(color){
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.8, 1.3), M(color)); body.position.y = 0.65; body.castShadow = true; g.add(body);
+  const cab = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.6, 1.15), M('#25384a')); cab.position.set(-0.1, 1.35, 0); cab.castShadow = true; g.add(cab);
+  const roofC = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 1.12), M(color)); roofC.position.set(-0.1, 1.68, 0); g.add(roofC);
+  if (color === '#f1c40f'){ const st = new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.12, 1.32), M('#111')); st.position.y = 0.75; g.add(st); }
+  const wg = new THREE.CylinderGeometry(0.3, 0.3, 0.25, 10); wg.rotateX(Math.PI / 2);
+  [[0.8, 0.62], [0.8, -0.62], [-0.8, 0.62], [-0.8, -0.62]].forEach(([x, z]) => { const w = new THREE.Mesh(wg, M('#151515')); w.position.set(x, 0.3, z); g.add(w); });
+  [0.4, -0.4].forEach(z => { const hl = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.18, 0.28), headMat); hl.position.set(1.31, 0.7, z); g.add(hl); });
+  scene.add(g);
+  return g;
+}
+const cars = [];
+(function spawnCars(){
+  const colors = ['#f1c40f', '#f1c40f', '#e74c3c', '#ecf0f1', '#2c3e50', '#3498db', '#7f8c8d'];
+  ROAD_ROWS.forEach(R => [[R + 0.5, -1], [R + 1.5, 1]].forEach(([lane, dir]) => {
+    for (let k = 0; k < 2; k++) cars.push({axis:'h', x:Math.random() * WW, y:lane * T, dir, speed:90 + Math.random() * 70, color:pick(colors)});
+  }));
+  ROAD_COLS.forEach(C => [[C + 0.5, 1], [C + 1.5, -1]].forEach(([lane, dir]) => {
+    cars.push({axis:'v', x:lane * T, y:Math.random() * WH, dir, speed:90 + Math.random() * 70, color:pick(colors)});
+  }));
+  cars.forEach(c => {
+    c.mesh = makeCar(c.color);
+    c.mesh.rotation.y = c.axis === 'h' ? (c.dir > 0 ? 0 : Math.PI) : (c.dir > 0 ? -Math.PI / 2 : Math.PI / 2);
+  });
+})();
+
+/* People */
+const PGEO = {
+  leg: new THREE.BoxGeometry(0.22, 0.76, 0.26), body: new THREE.BoxGeometry(0.62, 0.72, 0.36), arm: new THREE.BoxGeometry(0.18, 0.64, 0.2),
+  head: new THREE.BoxGeometry(0.42, 0.42, 0.4), hair: new THREE.BoxGeometry(0.44, 0.1, 0.42), eye: new THREE.BoxGeometry(0.07, 0.07, 0.02),
+  cap: new THREE.BoxGeometry(0.46, 0.14, 0.44), brim: new THREE.BoxGeometry(0.42, 0.04, 0.22), stripe: new THREE.BoxGeometry(0.2, 0.72, 0.37)
+};
+function makePerson(o){
+  const g = new THREE.Group();
+  const add = (geo, color, x, y, z, parent) => { const m = new THREE.Mesh(geo, M(color)); m.position.set(x, y, z); m.castShadow = true; (parent || g).add(m); return m; };
+  const hipL = new THREE.Group(); hipL.position.set(-0.15, 0.78, 0); g.add(hipL); add(PGEO.leg, o.pants, 0, -0.38, 0, hipL);
+  const hipR = new THREE.Group(); hipR.position.set(0.15, 0.78, 0); g.add(hipR); add(PGEO.leg, o.pants, 0, -0.38, 0, hipR);
+  add(PGEO.body, o.shirt, 0, 1.14, 0);
+  if (o.stripe) add(PGEO.stripe, o.stripe, 0, 1.14, 0);
+  const shL = new THREE.Group(); shL.position.set(-0.41, 1.44, 0); g.add(shL); add(PGEO.arm, o.skin, 0, -0.3, 0, shL);
+  const shR = new THREE.Group(); shR.position.set(0.41, 1.44, 0); g.add(shR); add(PGEO.arm, o.skin, 0, -0.3, 0, shR);
+  add(PGEO.head, o.skin, 0, 1.72, 0);
+  add(PGEO.hair, o.hair || '#151515', 0, 1.97, -0.01);
+  add(PGEO.eye, '#111', -0.09, 1.76, 0.205); add(PGEO.eye, '#111', 0.09, 1.76, 0.205);
+  if (o.cap){ add(PGEO.cap, o.cap, 0, 2.04, 0); add(PGEO.brim, o.cap, 0, 1.98, 0.26); }
+  scene.add(g);
+  return {g, hipL, hipR, shL, shR};
+}
+function animPerson(p, moving, anim, riding){
+  const s = riding ? 0 : moving ? Math.sin(anim) * 0.7 : 0;
+  p.hipL.rotation.x = riding ? -1.35 : s; p.hipR.rotation.x = riding ? -1.35 : -s;
+  p.shL.rotation.x = riding ? -1.0 : -s * 0.8; p.shR.rotation.x = riding ? -1.0 : s * 0.8;
+}
+function turnTo(cur, target, k){ let d = target - cur; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return cur + d * k; }
+
+const SKINS = ['#5a3825','#6b4226','#7a4b2a','#4a2e1c','#8d5a36','#3e2616'];
+const SHIRTS = ['#e74c3c','#3498db','#9b59b6','#f39c12','#1abc9c','#e67e22','#ecf0f1','#d35400','#16a085','#c0392b','#2c3e50','#f1c40f'];
+
+/* Player + okada */
+const playerRoot = new THREE.Group(); scene.add(playerRoot);
+const playerP = makePerson({shirt:'#0b8a4a', stripe:'#ffffff', skin:'#6b4226', pants:'#1b2631'});
+scene.remove(playerP.g); playerRoot.add(playerP.g);
+const bike = new THREE.Group();
+(function(){
+  const add = (geo, color, x, y, z) => { const m = new THREE.Mesh(geo, M(color)); m.position.set(x, y, z); m.castShadow = true; bike.add(m); return m; };
+  add(new THREE.BoxGeometry(0.36, 0.38, 1.5), '#c0392b', 0, 0.62, 0);
+  add(new THREE.BoxGeometry(0.34, 0.14, 0.75), '#111', 0, 0.86, -0.15);
+  add(new THREE.BoxGeometry(0.85, 0.07, 0.07), '#333', 0, 1.15, 0.62);
+  const wg = new THREE.CylinderGeometry(0.32, 0.32, 0.14, 12); wg.rotateZ(Math.PI / 2);
+  [0.65, -0.65].forEach(z => { const w = new THREE.Mesh(wg, M('#111')); w.position.set(0, 0.32, z); w.castShadow = true; bike.add(w); });
+  const hl = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.06), headMat); hl.position.set(0, 0.95, 0.78); bike.add(hl);
+})();
+playerRoot.add(bike);
+
+/* NPCs */
+const npcs = [];
+NPC_NAMES.forEach((name, i) => npcs.push({name, role:NPC_ROLES[i], police:false, shirt:SHIRTS[i % SHIRTS.length], skin:pick(SKINS), pants:pick(['#2c3e50','#34495e','#5d4037','#1b2631'])}));
+POLICE_NAMES.forEach(name => npcs.push({name, role:'Police officer', police:true, shirt:'#1f2a44', skin:pick(SKINS), pants:'#1f2a44', cap:'#111827'}));
+npcs.forEach(n => {
+  const p = randomWalkTile();
+  Object.assign(n, {x:p.x, y:p.y, speed:(n.police ? 40 : 45) + Math.random() * 30, wait:Math.random() * 3, face:0, anim:0, moving:false, greetDay:0});
+  const t = randomWalkTile(n.x, n.y); n.tx = t.x; n.ty = t.y;
+  n.p = makePerson({shirt:n.shirt, skin:n.skin, pants:n.pants, cap:n.cap, stripe:n.police ? '#2a3a5c' : null});
+  n.label = makeLabel(n.name, 0.5, n.police ? 'rgba(30,50,110,.9)' : 'rgba(10,22,15,.85)');
+  n.label.position.set(0, 2.7, 0); n.p.g.add(n.label);
+});
+
+/* Interaction marker */
+const marker = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.75, 4), new THREE.MeshLambertMaterial({color:0x7dffa8, emissive:new THREE.Color(0x2ecc71), emissiveIntensity:0.6}));
+marker.rotation.x = Math.PI; marker.visible = false; scene.add(marker);
+
+/* Camera */
+const camS = {yaw:0, dist:18, pitch:0.95};
+function camTarget(){
+  const px = player.x * S, pz = player.y * S, hor = camS.dist * Math.cos(camS.pitch);
+  return new THREE.Vector3(px + Math.sin(camS.yaw) * hor, camS.dist * Math.sin(camS.pitch) + 1, pz + Math.cos(camS.yaw) * hor);
+}
+camera.position.copy(camTarget());
+
+/* =========================================================
+   INPUT
+   ========================================================= */
+const keys = new Set();
+window.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
+  if (k === 'escape'){ if (panelState) closePanel(); else openPanel('menu'); return; }
+  if (panelState) return;
+  if (k === 'e' || k === 'enter' || k === ' ') { interact(); return; }
+  if (k === 'm') { openPanel('menu'); return; }
+  if (k === 'i') { openPanel('inventory'); return; }
+  if (k === 'g') { openPanel('guide'); return; }
+  keys.add(k);
+});
+window.addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+window.addEventListener('blur', () => keys.clear());
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+const joy = {id:null, ox:0, oy:0, dx:0, dy:0, active:false};
+const camDrag = {id:null, lx:0};
+const joyEl = $('joy'), knob = $('knob'), ghost = $('joyGhost');
+function resetJoy(){ joy.id = null; joy.active = false; joy.dx = joy.dy = 0; joyEl.style.display = 'none'; knob.style.transform = ''; camDrag.id = null; if (isTouch) ghost.style.display = 'flex'; }
+canvas.addEventListener('pointerdown', e => {
+  if (paused) return;
+  if (e.pointerType !== 'mouse' && e.clientX < vw * 0.45 && joy.id === null){
+    joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; joy.active = true; joy.dx = joy.dy = 0;
+    joyEl.style.left = joy.ox + 'px'; joyEl.style.top = joy.oy + 'px'; joyEl.style.display = 'block'; ghost.style.display = 'none';
+    return;
+  }
+  if (camDrag.id === null){ camDrag.id = e.pointerId; camDrag.lx = e.clientX; }
+});
+window.addEventListener('pointermove', e => {
+  if (e.pointerId === joy.id){
+    let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy;
+    const d = Math.hypot(dx, dy), R = 50;
+    if (d > R){ dx = dx / d * R; dy = dy / d * R; }
+    joy.dx = dx / R; joy.dy = dy / R;
+    knob.style.transform = `translate(${dx}px,${dy}px)`;
+  } else if (e.pointerId === camDrag.id){
+    camS.yaw -= (e.clientX - camDrag.lx) * 0.008; camDrag.lx = e.clientX;
+  }
+});
+['pointerup','pointercancel'].forEach(ev => window.addEventListener(ev, e => {
+  if (e.pointerId === joy.id){ joy.id = null; joy.active = false; joy.dx = joy.dy = 0; joyEl.style.display = 'none'; knob.style.transform = ''; if (isTouch) ghost.style.display = 'flex'; }
+  if (e.pointerId === camDrag.id) camDrag.id = null;
+}));
+canvas.addEventListener('wheel', e => { e.preventDefault(); camS.dist = clamp(camS.dist + e.deltaY * 0.02, 9, 34); }, {passive:false});
+$('zIn').addEventListener('click', () => camS.dist = clamp(camS.dist - 3, 9, 34));
+$('zOut').addEventListener('click', () => camS.dist = clamp(camS.dist + 3, 9, 34));
+
+const actBtn = $('actBtn'), hintEl = $('hint');
+actBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); interact(); });
+if (isTouch){ actBtn.style.display = 'block'; ghost.style.display = 'flex'; }
+
+let target = null;
+function findTarget(){
+  let best = null, bd = Infinity;
+  BUILDINGS.forEach(b => {
+    const d = Math.hypot(player.x - b.frontX, player.y - b.frontY);
+    if (d < T * 0.95 && d < bd){ bd = d; best = {type:'b', b}; }
+  });
+  npcs.forEach(n => {
+    const d = Math.hypot(player.x - n.x, player.y - n.y);
+    if (d < 46 && d < bd){ bd = d; best = {type:'n', n}; }
+  });
+  return best;
+}
+function interact(){
+  if (paused || !target) return;
+  if (target.type === 'b') openPanel(target.b.id);
+  else { target.n.wait = 6; openPanel('npc', target.n); }
+}
+
+/* =========================================================
+   UPDATE
+   ========================================================= */
+let lastTarget = '', hungerWarn = 0;
+function update(dt){
+  if (paused) return;
+  let mx = 0, my = 0;
+  if (keys.has('arrowleft') || keys.has('a')) mx -= 1;
+  if (keys.has('arrowright') || keys.has('d')) mx += 1;
+  if (keys.has('arrowup') || keys.has('w')) my -= 1;
+  if (keys.has('arrowdown') || keys.has('s')) my += 1;
+  if (keys.has('q')) camS.yaw += dt * 1.8;
+  if (keys.has('r')) camS.yaw -= dt * 1.8;
+  if (joy.active){ mx += joy.dx; my += joy.dy; }
+  const len = Math.hypot(mx, my);
+  player.moving = false;
+  if (len > 0.18){
+    const n = len > 1 ? len : 1; mx /= n; my /= n;
+    const fx = -Math.sin(camS.yaw), fz = -Math.cos(camS.yaw), rx = Math.cos(camS.yaw), rz = -Math.sin(camS.yaw);
+    const wx = rx * mx + fx * -my, wz = rz * mx + fz * -my;
+    const sp = (state.riding ? 270 : 150) * (state.energy <= 5 || state.hunger <= 5 ? 0.55 : 1);
+    const nx = player.x + wx * sp * dt, ny = player.y + wz * sp * dt;
+    if (free(nx, player.y)) player.x = nx;
+    if (free(player.x, ny)) player.y = ny;
+    player.moving = true; player.anim += dt * 11;
+    player.face = turnTo(player.face, Math.atan2(wx, wz), 1 - Math.exp(-dt * 14));
+  }
+
+  const gm = dt * TIME_SCALE;
+  advanceTime(gm);
+  state.energy = clamp(state.energy - gm * (0.03 + (player.moving ? (state.riding ? 0.025 : 0.065) : 0)), 0, 100);
+  state.hunger = clamp(state.hunger - gm * 0.06, 0, 100);
+  if (state.energy <= 0) state.health = clamp(state.health - gm * 0.25, 0, 100);
+  if (state.hunger <= 0) state.health = clamp(state.health - gm * 0.2, 0, 100);
+  if (state.energy > 60 && state.hunger > 40) state.health = clamp(state.health + gm * 0.008, 0, 100);
+  if (state.health <= 0) faint();
+  hungerWarn -= dt;
+  if (state.hunger < 25 && hungerWarn <= 0){ hungerWarn = 30; toast(`🍛 You're hungry! Eat at Mama Nkechi's Buka, or ${BAG} to eat.`, 'bad'); }
+
+  npcs.forEach(n => {
+    n.moving = false;
+    if (n.wait > 0){ n.wait -= dt; return; }
+    const dx = n.tx - n.x, dy = n.ty - n.y, d = Math.hypot(dx, dy);
+    if (d < 4){ n.wait = 1 + Math.random() * 4; const t = randomWalkTile(n.x, n.y); n.tx = t.x; n.ty = t.y; return; }
+    const step = n.speed * dt, nx = n.x + dx / d * step, ny = n.y + dy / d * step;
+    if (free(nx, ny, 10)){ n.x = nx; n.y = ny; n.moving = true; n.anim += dt * 9; n.face = turnTo(n.face, Math.atan2(dx, dy), 1 - Math.exp(-dt * 8)); }
+    else { const t = randomWalkTile(n.x, n.y); n.tx = t.x; n.ty = t.y; }
+  });
+
+  cars.forEach(c => {
+    if (c.axis === 'h'){ c.x += c.dir * c.speed * dt; if (c.x > WW + 80) c.x = -80; if (c.x < -80) c.x = WW + 80; }
+    else { c.y += c.dir * c.speed * dt; if (c.y > WH + 80) c.y = -80; if (c.y < -80) c.y = WH + 80; }
+  });
+
+  // Police stop and search
+  const now = absMin();
+  if (now - state.lastStop > 240){
+    for (const n of npcs){
+      if (n.police && Math.hypot(player.x - n.x, player.y - n.y) < 70){
+        state.lastStop = now;
+        if (Math.random() < 0.08 + state.heat / 110){ n.wait = 8; openPanel('checkpoint'); return; }
+        break;
+      }
+    }
+  }
+
+  target = findTarget();
+  const label = target ? (target.type === 'b' ? `Enter ${target.b.name}` : `Talk to ${target.n.name}`) : '';
+  if (label !== lastTarget){
+    lastTarget = label;
+    if (label){ hintEl.textContent = isTouch ? `Tap the button: ${label}` : `Press E: ${label}`; hintEl.style.display = 'block'; }
+    else hintEl.style.display = 'none';
+    actBtn.textContent = target ? (target.type === 'b' ? 'ENTER' : 'TALK') : '•';
+    actBtn.classList.toggle('dim', !target);
+  }
+}
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+function darkness(){
+  const m = state.minutes / 60;
+  if (m >= 6 && m < 18) return 0;
+  if (m >= 18 && m < 20) return (m - 18) / 2 * 0.5;
+  if (m >= 20 || m < 5) return 0.5;
+  return (6 - m) * 0.5;
+}
+let lastLit = -1;
+function updateOcclusion(px, pz){
+  const c = camera.position;
+  OCC.forEach(o => {
+    let hit = false;
+    for (let i = 0; i <= 16 && !hit; i++){
+      const t = i / 17, x = c.x + (px - c.x) * t, z = c.z + (pz - c.z) * t;
+      const m = i === 0 ? 4 : 1.2;
+      if (x > o.x0 - m && x < o.x1 + m && z > o.z0 - m && z < o.z1 + m) hit = true;
+    }
+    if (hit !== o.faded){
+      o.faded = hit;
+      o.mats.forEach(m => { m.transparent = hit; m.opacity = hit ? 0.22 : 1; m.depthWrite = !hit; m.needsUpdate = true; });
+      o.grp.traverse(m => { if (m.isMesh) m.castShadow = !hit; });
+    }
+  });
+}
+function updateLighting(px, pz){
+  const dark = darkness(), m = state.minutes / 60;
+  const ang = clamp((m - 6) / 12, 0, 1) * Math.PI;
+  sun.position.set(px + Math.cos(ang) * 40, 12 + Math.sin(ang) * 45, pz + 22);
+  sun.target.position.set(px, 0, pz);
+  sun.intensity = Math.max(0.08, 0.95 * (1 - dark * 1.7));
+  hemi.intensity = Math.max(0.22, 0.72 - dark * 0.8);
+  const t = dark / 0.5;
+  const sky = SKY_DAY.clone();
+  if (m >= 16.5 && m < 20) sky.lerp(SKY_DUSK, clamp(1 - Math.abs(m - 18.3) / 1.8, 0, 1) * 0.7);
+  sky.lerp(SKY_NIGHT, t);
+  scene.background.copy(sky); scene.fog.color.copy(sky);
+  const lit = dark > 0.12 ? 1 : 0;
+  if (lit !== lastLit){
+    lastLit = lit;
+    WALL_MATS.forEach(mt => mt.emissiveIntensity = lit ? 0.85 : 0);
+    bulbMat.emissiveIntensity = lit ? 1.2 : 0;
+    headMat.emissiveIntensity = lit ? 1.2 : 0;
+  }
+}
+function render(dt, now){
+  const px = player.x * S, pz = player.y * S;
+  playerRoot.position.set(px, 0, pz);
+  playerRoot.rotation.y = player.face;
+  bike.visible = state.riding;
+  playerP.g.position.y = state.riding ? 0.35 : 0;
+  playerP.g.position.z = state.riding ? -0.15 : 0;
+  animPerson(playerP, player.moving, player.anim, state.riding);
+
+  npcs.forEach(n => {
+    n.p.g.position.set(n.x * S, 0, n.y * S);
+    n.p.g.rotation.y = n.face;
+    animPerson(n.p, n.moving, n.anim, false);
+    n.label.visible = Math.hypot(player.x - n.x, player.y - n.y) < 140;
+  });
+  cars.forEach(c => c.mesh.position.set(c.x * S, 0, c.y * S));
+
+  if (target){
+    const tx = target.type === 'b' ? target.b.frontX : target.n.x, ty = target.type === 'b' ? target.b.frontY : target.n.y;
+    marker.visible = true;
+    marker.position.set(tx * S, (target.type === 'b' ? 3.3 : 3.2) + Math.sin(now / 200) * 0.2, ty * S);
+    marker.rotation.y += dt * 2;
+  } else marker.visible = false;
+
+  const k = 1 - Math.exp(-dt * 7);
+  camera.position.lerp(camTarget(), k);
+  camera.lookAt(px, 1.3, pz);
+  updateOcclusion(px, pz);
+  updateLighting(px, pz);
+  renderer.render(scene, camera);
+
+  // minimap
+  mctx.drawImage(miniBase, 0, 0);
+  const sx = mini.width / WW, sy = mini.height / WH;
+  npcs.forEach(n => { mctx.fillStyle = n.police ? '#4d7cff' : '#ffd23f'; mctx.fillRect(n.x * sx - 2, n.y * sy - 2, 4, 4); });
+  const mx = player.x * sx, my = player.y * sy;
+  mctx.strokeStyle = 'rgba(255,255,255,.8)'; mctx.lineWidth = 2;
+  mctx.beginPath(); mctx.moveTo(mx, my); mctx.lineTo(mx - Math.sin(camS.yaw) * 22, my - Math.cos(camS.yaw) * 22); mctx.stroke();
+  mctx.fillStyle = '#fff'; mctx.beginPath(); mctx.arc(mx, my, 6, 0, Math.PI * 2); mctx.fill();
+  mctx.fillStyle = '#0b8a4a'; mctx.beginPath(); mctx.arc(mx, my, 4, 0, Math.PI * 2); mctx.fill();
+}
+
+/* =========================================================
+   HUD
+   ========================================================= */
+const hud = {money:$('hMoney'), bank:$('hBank'), time:$('hTime'), day:$('hDay'), job:$('hJob'), heat:$('hHeat'), goal:$('goalText'),
+  bh:$('bHealth'), be:$('bEnergy'), bf:$('bFood'), br:$('bRep'), nh:$('nHealth'), ne:$('nEnergy'), nf:$('nFood'), nr:$('nRep')};
+function updateHUD(){
+  hud.money.textContent = fmt(state.money);
+  hud.bank.textContent = 'Bank: ' + fmt(state.bank);
+  const m = Math.floor(state.minutes), hh = Math.floor(m / 60), mm = m % 60;
+  hud.time.textContent = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+  hud.day.textContent = `${WEEKDAYS[(state.day - 1) % 7]} · Day ${state.day}`;
+  hud.job.textContent = state.job ? JOB[state.job].name : state.uni ? `Student ${state.uni.level}L` : state.nysc === 2 ? 'Corper' : 'Unemployed';
+  hud.heat.style.display = state.heat > 0 ? 'block' : 'none';
+  hud.heat.textContent = `🚨 Heat ${Math.round(state.heat)}`;
+  hud.bh.style.width = state.health + '%'; hud.be.style.width = state.energy + '%'; hud.bf.style.width = state.hunger + '%'; hud.br.style.width = state.rep + '%';
+  hud.nh.textContent = Math.round(state.health); hud.ne.textContent = Math.round(state.energy); hud.nf.textContent = Math.round(state.hunger); hud.nr.textContent = Math.round(state.rep);
+  hud.be.style.background = state.energy < 20 ? '#ff8a3d' : '#ffd23f';
+  hud.bf.style.background = state.hunger < 25 ? '#ff4d4d' : '#ff9f43';
+  hud.goal.textContent = goalText();
+}
+
+/* =========================================================
+   MAIN LOOP
+   ========================================================= */
+let last = performance.now(), hudTimer = 0, saveTimer = 0, warnTimer = 0;
+function loop(now){
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  update(dt);
+  render(dt, now);
+  hudTimer += dt; saveTimer += dt; warnTimer += dt;
+  if (hudTimer > 0.2){ hudTimer = 0; updateHUD(); }
+  if (saveTimer > 30 && !paused){ saveTimer = 0; saveGame(true); }
+  if (warnTimer > 25 && !paused){
+    warnTimer = 0;
+    if (state.energy < 15) toast('You are very tired. Go home to rest or take a nap.', 'bad');
+    else if (state.health < 30) toast('Your health is low. Visit the hospital.', 'bad');
+  }
+  requestAnimationFrame(loop);
+}
+
+/* =========================================================
+   BOOT
+   ========================================================= */
+const hadSave = loadGame();
+if (!hadSave || !state.news.length) genNews();
+updateHUD();
+if (!hadSave) openPanel('intro');
+else toast(`Welcome back! ${WEEKDAYS[(state.day - 1) % 7]}, Day ${state.day}.`, 'info');
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveGame(true); });
+requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>
