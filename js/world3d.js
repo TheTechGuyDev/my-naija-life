@@ -685,7 +685,13 @@ function makePerson(o){
   scene.add(g);
   return {g, hips, spine, head, aL, aR, lL, lR};
 }
-function animPerson(p, moving, ph, riding, speed){
+function animPerson(p, moving, ph, riding, speed, pose){
+  if (pose === 'sit'){
+    p.hips.position.y = 0.5; p.hips.rotation.y = 0; p.spine.rotation.y = 0; p.spine.rotation.x = 0.04 + Math.sin(ph) * 0.015;
+    p.lL.hp.rotation.x = p.lR.hp.rotation.x = -1.5; p.lL.kn.rotation.x = p.lR.kn.rotation.x = 1.5;
+    p.aL.sh.rotation.x = p.aR.sh.rotation.x = -0.45; p.aL.el.rotation.x = p.aR.el.rotation.x = -0.7;
+    p.aL.sh.rotation.z = -0.1; p.aR.sh.rotation.z = 0.1; return;
+  }
   if (riding){
     p.lL.hp.rotation.x = p.lR.hp.rotation.x = -1.45; p.lL.kn.rotation.x = p.lR.kn.rotation.x = 1.45;
     p.aL.sh.rotation.x = p.aR.sh.rotation.x = -1.05; p.aL.el.rotation.x = p.aR.el.rotation.x = -0.35;
@@ -834,6 +840,15 @@ function updateLighting(px, pz){
   if (tailMat) tailMat.emissiveIntensity = 0.3 + winI * 1.5;
   // traffic lights
   ['h','v'].forEach(ax => { const st = lightState(ax); ['red','amber','green'].forEach(k => TRAFFIC_MATS[ax + k].emissiveIntensity = st === k ? 3 : 0); });
+  if (inside){
+    sky.visible = false; scene.background = INDOOR_BG;
+    scene.fog.color.copy(INDOOR_BG); scene.fog.near = 30; scene.fog.far = 90;
+    hemi.intensity = 0.62 - dk * 0.2; sun.intensity *= 0.75;
+    indoorLight.intensity = 0.9 + dk * 1.1; indoorLight.position.set(px, 2.7, pz);
+    renderer.toneMappingExposure = 1.05;
+  } else if (!sky.visible){
+    sky.visible = true; scene.background = null; scene.fog.near = 90; scene.fog.far = 300; indoorLight.intensity = 0;
+  }
 }
 function updateOcclusion(px, pz){
   const c = camera.position;
@@ -854,14 +869,15 @@ function updateOcclusion(px, pz){
 const dummy = new THREE.Object3D();
 function render(dt, now){
   const tileC = Math.floor(player.x / T), tileR = Math.floor(player.y / T);
-  const targetY = isSidewalk(tileC, tileR) ? 0.14 : 0;
+  const targetY = inside ? 0 : isSidewalk(tileC, tileR) ? 0.14 : 0;
   player.y3 = lerp(player.y3, targetY, 1 - Math.exp(-dt * 20));
   const px = player.x * S, pz = player.y * S;
   playerRoot.position.set(px, player.y3, pz);
   playerRoot.rotation.y = player.face;
   bike.visible = state.riding;
-  playerP.g.position.set(0, state.riding ? -0.05 : 0, state.riding ? -0.28 : 0);
-  animPerson(playerP, player.moving, player.anim, state.riding, player.spd);
+  if (player.pose === 'lie'){ playerP.g.rotation.x = -Math.PI / 2; playerP.g.position.set(0, player.poseY || 0.5, 0); }
+  else { playerP.g.rotation.x = 0; playerP.g.position.set(0, state.riding ? -0.05 : (player.poseY && player.pose === 'sit' ? player.poseY : 0), state.riding ? -0.28 : 0); }
+  animPerson(playerP, player.moving, player.anim, state.riding, player.spd, player.pose === 'sit' ? 'sit' : null);
 
   npcs.forEach(n => {
     const nc = Math.floor(n.x / T), nr = Math.floor(n.y / T);
@@ -873,14 +889,14 @@ function render(dt, now){
   cars.forEach(c => { const [x, y] = carXY(c); c.mesh.position.set(x * S, 0, y * S); });
 
   if (target){
-    const tx = target.type === 'b' ? target.b.frontX : target.n.x, ty = target.type === 'b' ? target.b.frontY : target.n.y;
-    marker.visible = true;
-    marker.position.set(tx * S, 2.6 + Math.sin(now / 200) * 0.15, ty * S);
+    const tx = target.type === 's' ? target.s.x / S : target.type === 'b' ? target.b.frontX : target.n.x, ty = target.type === 's' ? target.s.z / S : target.type === 'b' ? target.b.frontY : target.n.y;
+    marker.visible = !sceneBusy;
+    marker.position.set(tx * S, (target.type === 's' ? 2.45 : 2.6) + Math.sin(now / 200) * 0.15, ty * S);
     marker.rotation.y += dt * 2;
   } else marker.visible = false;
 
   // navigation visuals
-  const tb = B[navTargetId()];
+  const tb = inside ? null : B[navTargetId()];
   if (tb){ beacon.visible = true; beacon.position.set(tb.frontX * S, 0, tb.frontY * S); beacon.children[1].scale.setScalar(1 + Math.sin(now / 300) * 0.15); }
   else beacon.visible = false;
   let n = 0;
@@ -888,28 +904,29 @@ function render(dt, now){
     const a = PATH[i - 1], b = PATH[i];
     for (let k = 0; k < 2 && n < 398; k++){
       const t = k / 2, x = lerp(a.x, b.x, t), y = lerp(a.y, b.y, t);
-      if (Math.hypot(x - player.x, y - player.y) < 16) continue;
+      if (Math.hypot(x - player.x, y - player.y) < (inside ? 6 : 16)) continue;
       const pulse = 1 + 0.25 * Math.sin(now / 180 - n * 0.5);
-      dummy.position.set(x * S, isSidewalk(Math.floor(x / T), Math.floor(y / T)) ? 0.16 : 0.05, y * S); dummy.scale.setScalar(pulse); dummy.rotation.set(0, 0, 0); dummy.updateMatrix();
+      dummy.position.set(x * S, inside ? 0.03 : isSidewalk(Math.floor(x / T), Math.floor(y / T)) ? 0.16 : 0.05, y * S); dummy.scale.setScalar(pulse); dummy.rotation.set(0, 0, 0); dummy.updateMatrix();
       crumbs.setMatrixAt(n++, dummy.matrix);
     }
   }
   crumbs.count = n; crumbs.instanceMatrix.needsUpdate = true;
 
   // camera
-  const hor = camS.dist * Math.cos(camS.pitch);
-  const look = new THREE.Vector3(px, player.y3 + 1.55, pz);
-  const want = new THREE.Vector3(px + Math.sin(camS.yaw) * hor, look.y + camS.dist * Math.sin(camS.pitch), pz + Math.cos(camS.yaw) * hor);
+  const cDist = inside ? Math.min(camS.dist, 11) : camS.dist, cPitch = inside ? Math.max(camS.pitch, 0.5) : camS.pitch;
+  const hor = cDist * Math.cos(cPitch);
+  const look = new THREE.Vector3(px, player.y3 + (player.pose === 'lie' ? 0.7 : player.pose === 'sit' ? 1.1 : 1.55), pz);
+  const want = new THREE.Vector3(px + Math.sin(camS.yaw) * hor, look.y + cDist * Math.sin(cPitch), pz + Math.cos(camS.yaw) * hor);
   want.y = Math.max(want.y, 0.35);
   camera.position.lerp(want, 1 - Math.exp(-dt * 10));
   camera.lookAt(look);
   sky.position.copy(camera.position);
-  updateOcclusion(px, pz);
+  if (inside) intRender(dt, now); else updateOcclusion(px, pz);
   updateLighting(px, pz);
   LABELS.forEach(l => { const d = Math.hypot(l.position.x - px, l.position.z - pz); l.visible = d < 110; });
   renderer.render(scene, camera);
-
-  drawMini();
+  updateSpeech();
+  if (inside) drawMiniInterior(); else drawMini();
 }
 function drawMini(){
   const mini = $('mini'), m = mini.getContext('2d'), W = mini.width, H = mini.height, sx = W / WW, sy = H / WH;

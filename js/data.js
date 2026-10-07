@@ -231,6 +231,38 @@ Object.assign(ITEMS, {
   watch:     {name:'Wristwatch',         price:70000, gift:22}
 });
 const GIFT_ITEMS = ['chocolate','flowers','perfume','watch'];
+ITEMS.foodstuff = {name:'Foodstuff (1 home meal)', price:1800, ingredient:true};
+MARKET_ITEMS.push('foodstuff');
+
+/* =========================================================
+   FURNITURE AND HOME DECOR (HomeStyle Furniture)
+   fits = lowest housing level (0 face-me-I-face-you ... 3 two-bedroom) it fits in
+   ========================================================= */
+const FURNITURE = [
+  {id:'bed2',      cat:'Bedroom', name:'Double bed & mattress', price:180000, fits:0, fx:'+10 energy when you sleep'},
+  {id:'fan',       cat:'Bedroom', name:'Standing fan',          price:35000,  fits:0, fx:'+5 energy when you sleep'},
+  {id:'ac',        cat:'Bedroom', name:'Split AC (1.5HP)',      price:450000, fits:0, fx:'+15 energy when you sleep, happier mornings'},
+  {id:'wardrobe',  cat:'Bedroom', name:'Wardrobe with mirror',  price:160000, fits:0, fx:'Dress sharp: +rep and interview bonus'},
+  {id:'tv',        cat:'Living',  name:'43" Smart TV',          price:220000, fits:0, fx:'Watch movies, football and news at home'},
+  {id:'sofa',      cat:'Living',  name:'Sofa',                  price:250000, fits:1, fx:'Relax at home (+energy)'},
+  {id:'dining',    cat:'Living',  name:'Dining set',            price:150000, fits:2, fx:'Eat at the table (+happiness)'},
+  {id:'desk',      cat:'Study',   name:'Desk & chair',          price:85000,  fits:0, fx:'Better study sessions'},
+  {id:'laptop',    cat:'Study',   name:'Laptop',                price:450000, fits:0, fx:'Freelance and online tutoring from home'},
+  {id:'shelf',     cat:'Study',   name:'Bookshelf',             price:70000,  fits:2, fx:'Read books (+exam hints)'},
+  {id:'fridge',    cat:'Kitchen', name:'Fridge',                price:320000, fits:0, fx:'Cold drinks, bigger home meals'},
+  {id:'cooker',    cat:'Kitchen', name:'Gas cooker',            price:120000, fits:0, fx:'Cook in 30 minutes instead of 60'},
+  {id:'generator', cat:'Power',   name:'Generator',             price:280000, fits:0, fx:'Power during NEPA outages (needs fuel)'},
+  {id:'inverter',  cat:'Power',   name:'Inverter & batteries',  price:950000, fits:0, fx:'Silent, free backup power during outages'},
+  {id:'rug',       cat:'Decor',   name:'Rugs',                  price:40000,  fits:0, fx:'+home comfort'},
+  {id:'curtains',  cat:'Decor',   name:'Curtains',              price:30000,  fits:0, fx:'+home comfort'},
+  {id:'art',       cat:'Decor',   name:'Wall art',              price:25000,  fits:0, fx:'+home comfort'},
+  {id:'plant',     cat:'Decor',   name:'Potted plants',         price:15000,  fits:0, fx:'+home comfort'}
+];
+const PAINTS = [
+  {id:'cream', name:'Cream', c:'#ecdfc2'}, {id:'sky', name:'Sky blue', c:'#9fc6e6'}, {id:'mint', name:'Mint green', c:'#a9dbb6'},
+  {id:'peach', name:'Peach', c:'#f0bf9c'}, {id:'grey', name:'Soft grey', c:'#bdbdbd'}, {id:'lilac', name:'Lilac', c:'#c7b0e3'}
+];
+const PAINT_PRICE = 45000;
 const PHONE_PRICE = 85000;
 
 /* =========================================================
@@ -382,11 +414,13 @@ const EVENTS = [
       opt('Manage it yourself', 'Free, but stressful', () => { gain('health', -8); gain('happy', -6); MARKET_ITEMS.forEach(k => { if (state.inv[k]) state.inv[k] = Math.floor(state.inv[k] / 2); }); return 'You spent hours packing water. Half your food got spoilt.'; }, null, 'danger')
     ]},
   {id:'outage', w:3, cool:4, ignore:1,
-    ctx:() => ({amt:price(8000)}),
+    ctx:() => ({amt:price(8000), fuel:price(5000)}),
     title:() => 'NEPA don take light ⚡',
     body:() => 'No light since morning. The room is hot and your phone battery is low.',
     options:c => [
-      opt('Buy fuel for the generator ⛽', fmt(c.amt), () => { if (!spend(c.amt)) return false; gain('energy', 5); return 'Gen don start. You can rest well.'; }),
+      state.home && state.home.items.inverter ? opt('Switch to your inverter 🔋', 'Free and silent', () => { gain('happy', 1); return 'Your inverter kept the light on. Peace of mind!'; })
+      : state.home && state.home.items.generator ? opt('Run your generator ⛽', fmt(c.fuel) + ' fuel', () => { if (!spend(c.fuel)) return false; gain('energy', 5); return 'Gen don start. You can rest well.'; })
+      : opt('Rent a small generator for the night ⛽', fmt(c.amt), () => { if (!spend(c.amt)) return false; gain('energy', 5); return 'You rented a gen from the next compound.'; }),
       opt('Endure the heat 🥵', 'Free', () => { gain('happy', -5); gain('energy', -10); return 'You managed with a hand fan all night.'; })
     ]},
   {id:'scam', w:2, cool:8, phone:true, ignore:1,

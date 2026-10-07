@@ -2,7 +2,7 @@
 /* =========================================================
    MY NAIJA LIFE · core constants and helpers
    ========================================================= */
-const VERSION = '4.0.0';
+const VERSION = '5.0.0';
 const T = 40, COLS = 60, ROWS = 40, WW = COLS * T, WH = ROWS * T;
 const S = 0.08;                     // pixels -> metres (1 tile = 3.2 m)
 const TIME_SCALE = 1.5;             // game minutes per real second (normal speed)
@@ -28,6 +28,7 @@ const shuffle = arr => { const a = arr.slice(); for (let i = a.length - 1; i > 0
 const rint = (a, b) => Math.round(a + Math.random() * (b - a));
 const WEEKDAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const BAG = isTouch ? 'tap 🎒 (Bag)' : 'press I or 🎒 (Bag)';
+const fmtH = h => h === 0 ? '12am' : h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 let GFX = 'high';

@@ -102,3 +102,15 @@ body.setup{background:radial-gradient(ellipse at 30% 20%,#1d6b3e 0%,#0b2a18 55%,
 .hist b{color:#ffd23f;font-weight:700;margin-right:8px;display:inline-block;min-width:58px}
 .tag{display:inline-block;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.1);margin:2px 4px 2px 0;font-size:11.5px}
 @media (max-height:460px){ .row{height:12px} .bar{width:56px} }
+
+#speech{position:fixed;transform:translate(-50%,-100%);max-width:min(360px,70vw);background:#fffdf5;color:#1b1b1b;border-radius:14px;padding:8px 12px 9px;font-size:14px;line-height:1.35;box-shadow:0 8px 24px rgba(0,0,0,.35);display:none;z-index:25;pointer-events:none}
+#speech b{display:block;font-size:11px;color:#0b6e3a;text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px}
+#speech b:empty{display:none}
+#speech:after{content:'';position:absolute;left:50%;bottom:-8px;margin-left:-8px;border:8px solid transparent;border-top-color:#fffdf5;border-bottom:0}
+#fadeScreen{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:35;transition:opacity .4s;display:flex;align-items:center;justify-content:center}
+#fadeScreen.on{opacity:1;pointer-events:auto}
+#fadeScreen span{color:#fff;font-size:22px;font-weight:800;text-align:center;padding:20px}
+#cineTop,#cineBot{position:fixed;left:0;right:0;height:0;background:#000;z-index:24;transition:height .35s;pointer-events:none}
+#cineTop{top:0}#cineBot{bottom:0}
+body.cine #cineTop,body.cine #cineBot{height:7vh}
+body.cine #actBtn,body.cine #joyGhost,body.cine #camGhost{opacity:0;pointer-events:none}

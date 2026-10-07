@@ -6,7 +6,9 @@ A 3D Nigerian life simulation that runs in the browser on PC and mobile.
 
 Pick your name, gender, faith and area (Ikeja, Yaba, Surulere, Lekki, Wuse 2, Bodija, Rumuola, Nassarawa GRA or New Haven). You start at 18 with ₦2,000,000 and a family back home. There is no single correct life: study, hustle, work, make friends, fall in love, look after your family, and live with the consequences of your choices.
 
-## Features (V4)
+## Features
+
+- **Walk-in interiors (V5):** your home has real rooms that change with your housing level (face-me-I-face-you, self-contain, mini flat, 2-bedroom). Sleep in your bed, cook in the kitchen, watch TV, study at your desk, bathe. Furniture and paint from HomeStyle Furniture appear in your home. NIMC is a full walk-through: ticket, queue, form, photo, fingerprints and signature.
 
 - **Life:** age and birthdays, health, energy, hunger, happiness and reputation, a Life Profile and a Life History timeline.
 - **People:** 16 NPCs with personalities (ambitious, religious, materialistic, jealous, loyal and more), interests and memory. You can go from stranger to friend, close friend, talking stage, dating and a serious relationship. Gist, hangouts, dates, gifts, jealousy, cheating and breakups.
@@ -40,6 +42,7 @@ Pick your name, gender, faith and area (Ikeja, Yaba, Surulere, Lekki, Wuse 2, Bo
 | `js/map.js` | City layout, addresses, walking and GPS pathfinding |
 | `js/life.js` | Save/migration, time, education, jobs, crime, relationships, family, events, daily life |
 | `js/world3d.js` | 3D rendering: buildings, roads, people, cars, lighting |
+| `js/interior.js` | Walk-in interiors, furniture models, home layouts, scenes and speech bubbles |
 | `js/ui.js` | Toasts, sound, building panels |
 | `js/panels.js` | Setup, phone, people, family, events, Life Profile |
 | `js/main.js` | Input, traffic, game loop, HUD, boot |

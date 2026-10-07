@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="My Naija Life">
 <title>My Naija Life</title>
-<link rel="stylesheet" href="css/style.css?v=4.0.0">
+<link rel="stylesheet" href="css/style.css?v=5.0.0">
 </head>
 <body class="setup">
 <canvas id="game"></canvas>
@@ -58,6 +58,9 @@
 <div id="joyGhost">Drag to<br>move</div>
 <div id="camGhost">Drag here to<br>look around</div>
 <div id="flash"></div>
+<div id="speech"><b></b><span></span></div>
+<div id="fadeScreen"><span></span></div>
+<div id="cineTop"></div><div id="cineBot"></div>
 
 <div id="panel">
   <div class="box">
@@ -82,9 +85,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
-  var V = '4.0.0';
+  var V = '5.0.0';
   if (!window.THREE){ document.getElementById('noThree').style.display = 'flex'; return; }
-  ['core','data','map','life','world3d','ui','panels','main'].forEach(function(f){
+  ['core','data','map','life','world3d','interior','ui','panels','main'].forEach(function(f){
     var s = document.createElement('script'); s.src = 'js/' + f + '.js?v=' + V; s.async = false; document.body.appendChild(s);
   });
 })();

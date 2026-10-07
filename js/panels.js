@@ -70,6 +70,7 @@ Object.assign(PANELS, {
       <li><b>Move:</b> WASD / arrow keys, or drag the left side of the screen. <b>Look around:</b> drag the right side (or the mouse). <b>Zoom:</b> pinch, wheel or ＋/－.</li>
       <li><b>People:</b> walk up to anyone and press <b>E</b> to talk. Introduce yourself, gist, swap numbers, hang out. Friendships can become romance.</li>
       <li><b>📱 Phone:</b> calls, chats, family, notifications, your Life Profile and Life History.</li>
+      <li><b>🏠 Go inside:</b> homes and offices have real rooms. Walk to the glowing rings (bed, kitchen, counters, booths) and press <b>E</b> to use them.</li>
       <li><b>🍛 Eating:</b> Mama Nkechi's Buka, or buy food at ${AREA.market} and eat from your Bag (${BAG}). <b>😊 Happiness</b> matters too.</li>
       <li><b>🚦 Road safety:</b> cross at zebra crossings. <b>🧭 Directions:</b> follow the yellow dots to the suggested next step.</li>
     </ul>`,
@@ -111,7 +112,7 @@ Object.assign(PANELS, {
     const open = inHours(6, 20), closed = open ? null : 'The market is closed.';
     const food = MARKET_ITEMS.map(k => {
       const it = ITEMS[k], c = price(it.price);
-      return opt(`Buy ${it.name}`, `${fmt(c)} · +${it.food} food · You have ${state.inv[k] || 0}`, () => {
+      return opt(`Buy ${it.name}`, `${fmt(c)} · ${it.ingredient ? 'Cook it at home' : `+${it.food} food`} · You have ${state.inv[k] || 0}`, () => {
         if (!spend(c)) return; state.inv[k] = (state.inv[k] || 0) + 1; advanceTime(5); toast(`Bought ${it.name}. To eat it, ${BAG}.`, 'good');
       }, closed);
     });
@@ -127,10 +128,11 @@ Object.assign(PANELS, {
 
   inventory: () => {
     const keys = Object.keys(state.inv).filter(k => state.inv[k] > 0 && ITEMS[k]);
-    const usable = keys.filter(k => !ITEMS[k].gift), gifts = keys.filter(k => ITEMS[k].gift);
+    const usable = keys.filter(k => !ITEMS[k].gift && !ITEMS[k].ingredient), gifts = keys.filter(k => ITEMS[k].gift);
     return {
       title: 'Your Bag 🎒', sub: keys.length ? 'Tap food or medicine to use it.' : `Your bag is empty. Buy food at ${AREA.market} or medicine at the hospital.`,
       body: `<div class="kv"><b>🍛 Hunger</b><span>${Math.round(state.hunger)}/100</span><b>⚡ Energy</b><span>${Math.round(state.energy)}/100</span><b>❤️ Health</b><span>${Math.round(state.health)}/100</span><b>😊 Happiness</b><span>${Math.round(state.happy)}/100</span></div>
+        ${state.inv.foodstuff ? `<div class="note">🥘 Foodstuff ×${state.inv.foodstuff}: cook it in your kitchen at home.</div>` : ''}
         ${gifts.length ? `<div class="note">🎁 Gifts: ${gifts.map(k => `${ITEMS[k].name} ×${state.inv[k]}`).join(', ')}. Talk to someone to give a gift.</div>` : ''}`,
       options: usable.map(k => {
         const it = ITEMS[k];
@@ -322,7 +324,7 @@ Object.assign(PANELS, {
         <b>Reputation</b><span>${Math.round(state.rep)}/100 ${bar(state.rep, '#5ab4ff')}</span>
         <b>Health</b><span>${Math.round(state.health)}/100 ${bar(state.health, '#ff5a5a')}</span>
         <b>Happiness</b><span>${Math.round(state.happy)}/100 ${bar(state.happy, '#c38bff')}</span>
-        <b>House</b><span>${HOUSING[state.housing].name}</span>
+        <b>House</b><span>${HOUSING[state.housing].name} · Comfort ${homeComfort()}/10</span>
         <b>Vehicles</b><span>${state.hasOkada ? 'Okada (Bajaj Boxer)' : 'None'}</span>
         <b>Police record</b><span>${state.arrests ? `${state.arrests} arrest(s)` : 'Clean ✅'}</span>
         <b>Road accidents</b><span>${state.accidents}</span>
@@ -371,4 +373,103 @@ Object.assign(PANELS, {
       opt('No, go back', '', () => { openPanel('menu'); return false; })
     ]
   })
+});
+
+/* =========================================================
+   V5 PANELS: home stations, furniture store, NIMC form
+   ========================================================= */
+Object.assign(PANELS, {
+  bed: () => {
+    const h = HOUSING[state.housing], hr = hour(), night = hr >= 18 || hr < 5, sl = sleepGain();
+    return {title:'Your bed 🛏️', sub:`${h.name} · Rent ${fmt(rentOf(state.housing))}/week · Next rent: Day ${state.rentDueDay}`,
+      body:`<div class="kv"><b>Sleep quality</b><span>+${sl} energy${hasItem('ac') ? ' (AC ❄️)' : hasItem('fan') ? ' (fan 🌀)' : ''}</span><b>Home comfort</b><span>${homeComfort()}/10 ${bar(homeComfort() * 10, '#c38bff')}</span></div>
+        <div class="note">Buy furniture and decor at HomeStyle Furniture to sleep better and feel happier at home.</div>`,
+      options:[
+        opt('Sleep till morning 🌙', `Wake at 6:00 · +${sl} energy`, () => { closePanel(); sleepScene(true); return false; }, night ? null : 'You can only sleep for the night after 6pm.', 'cur'),
+        opt('Take a nap 😴', '2 hours · +25 energy', () => { closePanel(); sleepScene(false); return false; }, (state.daily.naps || 0) >= 2 ? 'You have napped enough today.' : null),
+        opt('Navigate to HomeStyle Furniture 🧭', 'Upgrade your home', () => { state.nav = 'furniture'; closePanel(); return false; })
+      ]};
+  },
+  desk: () => {
+    const U = state.uni;
+    const online = HUSTLES.filter(hh => ['design', 'code', 'tutor'].includes(hh.id));
+    return {title:hasItem('laptop') ? 'Your desk 💻' : 'Study table 📖', sub:hasItem('desk') ? 'A proper desk helps you focus.' : 'Buy a desk and laptop at HomeStyle Furniture.',
+      body:U ? `<div class="kv"><b>Course</b><span>${DEPTS[U.dept].name}, ${U.level}L</span><b>Extra exam hints</b><span>${U.study || 0}/2 from studying</span></div>` : '',
+      options:[
+        opt('Study 📚', `${hasItem('desk') ? '1 hour' : '1.5 hours'} · ${U ? '+1 exam hint' : '+reputation'}`, () => {
+          closePanel();
+          runScene([{say:['player', U ? `Let me read my ${DEPTS[U.dept].name} notes...` : 'Let me read something useful...'], ms:1300}, {fade:'📚 Studying...', fx:() => {
+            state.daily.studied = true; advanceTime(hasItem('desk') ? 60 : 90); gain('energy', -8);
+            if (U) U.study = Math.min(2, (U.study || 0) + 1); else gain('rep', 1);
+            if (hasItem('shelf')) gain('happy', 2);
+          }}]); return false;
+        }, state.daily.studied ? 'You already studied today.' : state.energy < 12 ? 'Too tired to study.' : null, 'cur'),
+        ...online.map(hh => opt(`Work online: ${hh.name}`, `${fmt(hh.min)} to ${fmt(hh.max)} · ${hh.hours} hrs`, () => {
+          closePanel();
+          runScene([{say:['player', 'Time to make some money online 💻'], ms:1200}, {fade:'💻 Working...', fx:() => {
+            state.daily.hustle = true; gain('energy', -hh.energy); gain('hunger', -10); advanceTime(hh.hours * 60);
+            const amt = Math.round(rint(hh.min, hh.max) / 100) * 100; state.money += amt; state.hustleEarned += amt; toast(`${hh.name}: you made ${fmt(amt)} from home.`, 'good');
+          }}]); return false;
+        }, !hasItem('laptop') ? 'You need a laptop.' : hustleBlock(hh)))
+      ]};
+  },
+  lounge: () => ({
+    title:hasItem('tv') ? 'Living room 📺' : 'Sofa 🛋️', sub:'Relax and unwind at home.', body:'',
+    options:[
+      opt('Watch a Nollywood movie 🎬', '1.5 hours · +7 happiness', () => { closePanel(); loungeScene('movie'); return false; }, hasItem('tv') ? null : 'You need a TV.'),
+      opt('Watch football ⚽', '2 hours · +6 happiness', () => { closePanel(); loungeScene('ball'); return false; }, hasItem('tv') ? null : 'You need a TV.'),
+      opt('Watch the news 📰', '30 mins · Free headlines', () => { closePanel(); loungeScene('news'); return false; }, hasItem('tv') ? null : 'You need a TV.'),
+      opt('Relax on the sofa 😌', '1 hour · +8 energy', () => { closePanel(); loungeScene('relax'); return false; }, hasItem('sofa') ? (state.daily.relaxed ? 'You already relaxed today.' : null) : 'You need a sofa.')
+    ]
+  }),
+  kitchen: () => ({
+    title:'Kitchen 🍳', sub:`${hasItem('cooker') ? 'Gas cooker' : 'Kerosene stove'}${hasItem('fridge') ? ' · Fridge' : ''} · Foodstuff: ${state.inv.foodstuff || 0}`,
+    body:(state.inv.foodstuff || 0) ? '' : `<div class="note">No foodstuff. Buy "Foodstuff (1 home meal)" at ${AREA.market}. Cooking at home is cheaper than buying food.</div>`,
+    options:[
+      opt('Cook a meal 🍲', `${hasItem('cooker') ? '30' : '60'} mins · +${45 + (hasItem('fridge') ? 10 : 0)} food · uses 1 foodstuff`, () => { closePanel(); cookScene(); return false; }, (state.inv.foodstuff || 0) < 1 ? 'You have no foodstuff.' : null, 'cur'),
+      opt('Get a cold drink 🥤', '+6 energy · once a day', () => { state.daily.drink = true; gain('energy', 6); gain('happy', 1); toast('Ahh, cold malt! 🥤', 'good'); }, !hasItem('fridge') ? 'You need a fridge.' : state.daily.drink ? 'Already had one today.' : null),
+      opt('Eat from your bag 🎒', 'Open inventory', () => { openPanel('inventory'); return false; })
+    ]
+  }),
+  bath: () => ({
+    title:'Bathroom 🚿', sub:'Freshen up.', body:'',
+    options:[opt('Take a bath 🛁', '20 mins · +6 energy · +2 happiness', () => { closePanel(); runScene([{fade:'🚿 Splash splash...', fx:() => { state.daily.bathed = true; advanceTime(20); gain('energy', 6); gain('happy', 2); }}]); return false; }, state.daily.bathed ? 'You already had your bath today.' : null, 'cur')]
+  }),
+  wardrobe: () => ({
+    title:'Wardrobe 👔', sub:'Look good, feel good.', body:'',
+    options:[opt('Iron and wear your best outfit 👔', '15 mins · +1 rep · interview bonus today', () => { closePanel(); runScene([{say:['player', 'Let me check myself in the mirror... 😎'], ms:1300}, {fade:'👔 Getting dressed...', fx:() => { state.daily.dressed = true; advanceTime(15); gain('rep', 1); gain('happy', 1); }}]); return false; }, state.daily.dressed ? 'You are already dressed sharp today.' : null, 'cur')]
+  }),
+  furniture: () => {
+    const tierName = HOUSING[state.housing].name;
+    const opts = FURNITURE.map(f => {
+      const owned = hasItem(f.id), fits = state.housing >= f.fits;
+      return opt(`${owned ? '✅ ' : ''}${f.name}`, `${f.cat} · ${fmt(f.price)} · ${f.fx}${fits ? '' : ` · Won't fit your ${tierName} yet`}`, () => {
+        if (!spendAny(f.price)) return;
+        state.home.items[f.id] = true;
+        if (f.price >= 150000) addHistory(`Bought ${f.name.toLowerCase()} for the house`, '🛋️');
+        gain('happy', 3); sfx('ding');
+        toast(fits ? `${f.name} delivered to your home 🚚` : `${f.name} bought. It goes in storage until you move to a bigger place.`, 'good');
+      }, owned ? 'You already own this.' : null, owned ? 'cur' : '');
+    });
+    const paints = PAINTS.map(pt => opt(`${state.home.paint === pt.id ? '✅ ' : ''}Paint: ${pt.name} 🎨`, `${fmt(PAINT_PRICE)} · Repaint your walls`, () => {
+      if (!spendAny(PAINT_PRICE)) return; state.home.paint = pt.id; gain('happy', 2); toast(`Your walls are now ${pt.name.toLowerCase()}. 🎨`, 'good');
+    }, state.home.paint === pt.id ? 'Your walls are already this colour.' : null));
+    return {title:'HomeStyle Furniture 🛋️', sub:`Delivered the same day. Your home: ${tierName} · Comfort ${homeComfort()}/10`, body:'', options:[...opts, ...paints]};
+  },
+  nimcForm: () => {
+    if (!state.dob) state.dob = `${String(rint(1, 28)).padStart(2, '0')}/${String(rint(1, 12)).padStart(2, '0')}/${2026 - ageNow()}`;
+    if (!state.phoneNo) state.phoneNo = '080' + rint(10000000, 99999999);
+    const F = state.family;
+    return {title:'NIN Enrolment Form 📝', sub:'National Identity Management Commission', body:`<div class="kv">
+      <b>Surname</b><span>${esc(F.surname)}</span><b>First name</b><span>${esc(state.name)}</span>
+      <b>Sex</b><span>${state.gender === 'f' ? 'Female' : 'Male'}</span><b>Date of birth</b><span>${state.dob}</span>
+      <b>State of origin</b><span>${TOWN_STATE[F.town] || AREA.city}</span><b>Residential address</b><span>${addressOf(B.home)}, ${AREA.name}, ${AREA.city}</span>
+      <b>Phone number</b><span>${state.phoneNo}</span></div><div class="note">Check your details carefully. Wrong details cost money to correct later.</div>`,
+      options:[
+        opt('Submit form ✍🏾', 'Then go to the capture booth', () => {
+          inside.visit.form = true; advanceTime(20); closePanel();
+          speak(inside.officer, 'Thank you. Now go to the capture booth on your right for photo and fingerprints.'); return false;
+        }, null, 'go')
+      ]};
+  }
 });

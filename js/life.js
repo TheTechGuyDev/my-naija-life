@@ -5,7 +5,7 @@
 function newState(setup){
   const area = AREAS.find(a => a.id === setup.area) || AREAS[0];
   return {
-    v:4, name:setup.name, gender:setup.gender, area:setup.area, religion:setup.religion || 'none', age0:18,
+    v:5, name:setup.name, gender:setup.gender, area:setup.area, religion:setup.religion || 'none', age0:18,
     money:2000000, bank:0, health:100, energy:100, hunger:75, happy:70, rep:50,
     day:1, minutes:7 * 60,
     nin:false, ninReadyDay:0,
@@ -21,7 +21,7 @@ function newState(setup){
     people:{}, partner:null, cheat:0, chats:{}, unread:{},
     family:genFamily(area), pending:[], evCool:{}, nextEventMin:600, loans:[], invest:[],
     history:[{d:1, t:`Started life in ${area.name}, ${area.city} with ₦2,000,000`, i:'🌱'}],
-    flags:{}
+    flags:{}, home:{items:{}, paint:'cream'}
   };
 }
 let state = null;
@@ -40,6 +40,7 @@ function migrate(d){
     d.history.push({d:d.day || 1, t:'Upgraded to My Naija Life V4', i:'⬆️'});
     d.v = 4;
   }
+  if (d.v < 5){ d.home = d.home || {items:{}, paint:'cream'}; d.v = 5; }
   return d;
 }
 function genNews(){
@@ -187,7 +188,7 @@ function examResult(s, n){
   advanceTime(180); gain('energy', -15); gain('hunger', -10);
   if (pct >= 50){
     addHistory(`Passed ${U.level}L ${U.carry ? 'carryover' : 'exam'} (${pct}%)`, '📝'); gain('happy', 5);
-    U.scores.push(pct); U.carry = false; U.lectures = 0;
+    U.scores.push(pct); U.carry = false; U.lectures = 0; U.study = 0;
     if (U.level === 400){ graduate(); return; }
     if (U.level === 300){ U.needSiwes = true; U.siwes = 0; }
     U.level += 100; U.paid = false; gain('rep', 2);
@@ -226,6 +227,7 @@ function startInterview(j){
     advanceTime(120); state.daily['iv_' + j.id] = true;
     let bonus = 0; const notes = [];
     if (state.daily.groomed){ bonus += 0.5; notes.push('fresh haircut (+0.5)'); }
+    if (state.daily.dressed){ bonus += 0.25; notes.push('sharp outfit (+0.25)'); }
     if (state.happy < 25){ bonus -= 0.5; notes.push('low mood (-0.5)'); }
     if (state.rep >= 70){ bonus += 0.5; notes.push('good reputation (+0.5)'); }
     if (state.degree && state.degree.cls === 'First Class'){ bonus += 1; notes.push('First Class (+1)'); }
@@ -284,19 +286,21 @@ function spendAny(c){
 /* =========================================================
    SUGGESTED NEXT STEP (optional guide)
    ========================================================= */
-function goal(){
+function goal(o){
+  const place = o && o.placeOnly;
   const fullBag = Object.keys(state.inv).some(k => state.inv[k] > 0 && ITEMS[k] && ITEMS[k].food);
   if (state.hunger < 30){
+    if ((state.inv.foodstuff || 0) > 0 && !(inHours(7, 21) && state.money > 5000 && !place)) return {text:'You\'re hungry! Go home and cook with your foodstuff.', to:'home'};
     if (fullBag) return {text:`You're hungry! ${BAG} and eat, or go to Mama Nkechi's Buka.`, to:'mamaput'};
     return inHours(7, 21) ? {text:"You're hungry! Go and eat at Mama Nkechi's Buka.", to:'mamaput'} : {text:"You're hungry! The buka is closed. Try pepper soup at the Chill Spot, or the market from 6am.", to:hour() >= 12 || hour() < 2 ? 'joint' : 'market'};
   }
   if (state.energy < 18) return {text:'You are exhausted. Go home and sleep (after 6pm) or take a nap.', to:'home'};
   if (state.health < 30) return {text:'Your health is low. Go to General Hospital.', to:'hospital'};
-  if (state.pending.length) return {text:`📱 You have ${state.pending.length} notification${state.pending.length > 1 ? 's' : ''}. Tap 📱 to respond.`, to:null};
+  if (state.pending.length && !place) return {text:`📱 You have ${state.pending.length} notification${state.pending.length > 1 ? 's' : ''}. Tap 📱 to respond.`, to:null};
   if (state.happy < 25) return {text:'You are feeling down. Hang out with friends, call your family, or relax at the Chill Spot.', to:'joint'};
   if (!state.nin){
     if (!state.ninReadyDay) return {text:'Enrol for your NIN at the NIMC Enrolment Centre (8am to 4pm). JAMB, the bank and NYSC all need it.', to:'nimc'};
-    return {text:'Your NIN is processing and arrives tomorrow. Meanwhile, meet people: walk up to someone and press E to talk.', to:null};
+    return {text:'Your NIN is processing and arrives tomorrow. Meanwhile, meet people (press E near someone) or make money at Hustle Hub.', to:'hustle'};
   }
   if (!state.degree){
     if (!state.jamb) return {text:'Write JAMB at Unity University to gain admission (score 200+).', to:'uni'};
@@ -313,11 +317,11 @@ function goal(){
   if (!state.cv) return {text:'Print your CV at the Cyber Cafe.', to:'cyber'};
   if (!state.job) return state.daily.groomed ? {text:'Apply for jobs at the Business Hub and pass the interview.', to:'jobs'} : {text:'Get a fresh haircut at Kutz before your interview, then go to the Business Hub.', to:'barber'};
   if (!state.daily.worked) return {text:'Go to work: the Business Hub (6am to 6pm).', to:'jobs'};
-  if (!friendIds(30).length) return {text:'Make friends: walk up to people around town and talk to them.', to:null};
+  if (!friendIds(30).length) return {text:'Make friends: walk up to people around town and talk to them. The Chill Spot is a good place to meet people.', to:'joint'};
   if (!state.daily.hustle) return {text:'Grow your side hustle at Hustle Hub.', to:'hustle'};
   return {text:'Good day! Spend time with people you care about, or go home and rest.', to:'home'};
 }
-function navTargetId(){ return state.nav || (state.guide ? goal().to : null); }
+function navTargetId(){ return state.nav || (state.guide ? goal({placeOnly:true}).to : null); }
 
 /* =========================================================
    PEOPLE AND RELATIONSHIPS

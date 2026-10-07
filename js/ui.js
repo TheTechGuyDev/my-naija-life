@@ -209,7 +209,7 @@ const PANELS = {
           state.daily.lecture = true; U.lectures++; gain('energy', -20); gain('hunger', -10); advanceTime(240);
           toast('Lecture attended. You understand the course better.', 'good');
         }, !open ? closed : state.daily.lecture ? 'Only one lecture per day. Come back tomorrow.' : U.lectures >= 4 ? 'You have attended all lectures. Write your exam.' : state.energy < 20 ? 'Too tired for lectures (need 20 energy).' : null));
-        const need = U.carry ? 1 : 2, hints = Math.max(0, U.lectures - 1);
+        const need = U.carry ? 1 : 2, hints = Math.max(0, U.lectures - 1) + (U.study || 0);
         opts.push(opt(U.carry ? 'Rewrite carryover exam ♻️' : `Write ${U.level}L exam 📝`, `${U.carry ? fmt(20000) + ' · ' : ''}6 questions · Pass 50% · ${hints} hint(s)`, () => {
           if (U.carry && !spend(20000)) return;
           state.daily.exam = true;

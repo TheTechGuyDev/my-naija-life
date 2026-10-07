@@ -79,8 +79,9 @@ function findTarget(){
   return best;
 }
 function interact(){
-  if (paused || !target) return;
-  if (target.type === 'b'){ if (state.nav === target.b.id) state.nav = null; openPanel(target.b.id); }
+  if (paused || !target || sceneBusy) return;
+  if (target.type === 's'){ target.s.act(target.s); return; }
+  if (target.type === 'b'){ if (state.nav === target.b.id) state.nav = null; if (hasInterior(target.b.id)) enterBuilding(target.b.id); else openPanel(target.b.id); }
   else { target.n.wait = 6; openPanel('npc', target.n); }
 }
 
@@ -171,10 +172,11 @@ function update(dt){
     const fx = -Math.sin(camS.yaw), fz = -Math.cos(camS.yaw), rx = Math.cos(camS.yaw), rz = -Math.sin(camS.yaw);
     const wx = rx * mx + fx * -my, wz = rz * mx + fz * -my;
     const run = keys.has('shift') || Math.min(1, len) > 0.92;
-    const sp = (state.riding ? 150 : run ? 62 : 38) * (state.energy <= 5 || state.hunger <= 5 ? 0.55 : 1);
+    const sp = (state.riding ? 150 : run ? 62 : 38) * (inside ? 0.7 : 1) * (state.energy <= 5 || state.hunger <= 5 ? 0.55 : 1);
     const nx = player.x + wx * sp * dt, ny = player.y + wz * sp * dt;
-    if (free(nx, player.y)) player.x = nx;
-    if (free(player.x, ny)) player.y = ny;
+    const canGo = inside ? intFree : free;
+    if (canGo(nx, player.y)) player.x = nx;
+    if (canGo(player.x, ny)) player.y = ny;
     player.moving = true; player.spd = sp / 62;
     player.anim += dt * (state.riding ? 0 : sp * 0.17);
     player.face = turnTo(player.face, Math.atan2(wx, wz), 1 - Math.exp(-dt * 12));
@@ -195,6 +197,7 @@ function update(dt){
   if (paused) return;
   hungerWarn -= dt;
   if (state.hunger < 25 && hungerWarn <= 0){ hungerWarn = 30; toast(`🍛 You're hungry! Go to Mama Nkechi's Buka, or ${BAG} to eat.`, 'bad'); }
+  if (inside){ intTick(dt); return; }
 
   npcs.forEach(n => {
     n.moving = false;
@@ -275,6 +278,14 @@ function updateHUD(){
   hud.be.style.background = state.energy < 20 ? '#ff8a3d' : '#ffd23f';
   hud.bf.style.background = state.hunger < 25 ? '#ff4d4d' : '#ff9f43';
   const g = goal();
+  if (inside){
+    hud.goal.textContent = g.text;
+    const hs = inside.hintStation;
+    hud.dist.textContent = hs ? `🧭 ${hs.label.replace(/^[^A-Za-z]*/, '')} · ${Math.max(0, Math.round(Math.hypot(hs.x - player.x * S, hs.z - player.y * S)))} m` : '';
+    if (hs){ const dx = hs.x / S - player.x, dz = hs.z / S - player.y, fx = -Math.sin(camS.yaw), fz = -Math.cos(camS.yaw), rx = Math.cos(camS.yaw), rz = -Math.sin(camS.yaw); hud.arrow.style.transform = `rotate(${Math.atan2(dx * rx + dz * rz, dx * fx + dz * fz) * 180 / Math.PI}deg)`; hud.arrow.style.opacity = '1'; } else hud.arrow.style.opacity = '0.4';
+    hud.loc.textContent = `Inside ${inside.name} · ${inside.id === 'home' ? HOUSING[state.housing].name + ', ' : ''}${addressOf(B[inside.id])}, ${AREA.name}`;
+    return;
+  }
   const tb = B[navTargetId()];
   hud.goal.textContent = state.nav ? `Go to ${tb.name}` : g.text;
   if (tb && PATH.length > 1){
