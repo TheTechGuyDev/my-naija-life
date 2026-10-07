@@ -528,7 +528,16 @@ const EVENTS = [
   {id:'network', w:1.5, cool:6, ignore:0,
     title:() => 'Network don jam 📶',
     body:() => '"No service." Your data is not working and calls keep dropping.',
-    options:() => [opt('Wait it out', '', () => { gain('happy', -2); return 'Network came back after a few hours.'; })]},
+    options:() => [opt('Wait it out', '', () => { gain('happy', -2); if (state.phone) state.phone.netDownUntil = absMin() + 240; return 'No network for the next few hours. Calls, chats and apps will not work.'; })]},
+  {id:'brandDeal', w:2, cool:6, phone:true, ignore:1,
+    cond:() => state.phone && state.phone.gram.followers >= 3000,
+    ctx:() => ({amt:Math.round(state.phone.gram.followers * rint(8, 20) / 1000) * 1000, brand:pick(['ChopLife Noodles', 'NaijaFresh Juice', 'Lagos Kicks', 'SwiftPay', 'GlowSkin'])}),
+    title:c => `Sponsored post offer: ${c.brand} 💼`,
+    body:c => `Hi! We love your NaijaGram content. ${c.brand} will pay you ${fmt(c.amt)} for one sponsored post.`,
+    options:c => [
+      opt('Accept the deal 🤝', fmt(c.amt), () => { state.bank += c.amt; state.phone.gram.followers = Math.round(state.phone.gram.followers * 0.98); addHistory(`Paid ${fmt(c.amt)} for a sponsored NaijaGram post`, '💼'); return 'Payment received in your bank account.'; }),
+      opt('Decline', '', () => 'You declined the offer.')
+    ]},
   {id:'party', w:1.5, cool:5, ignore:1,
     cond:() => hour() >= 17,
     title:() => 'Neighbour is throwing a party 🎉',

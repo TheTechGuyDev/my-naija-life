@@ -4,6 +4,8 @@
    ========================================================= */
 const keys = new Set();
 window.addEventListener('keydown', e => {
+  if (phoneOpen){ if (e.key === 'Escape') phBack(); return; }
+  if (camMode && e.key === 'Escape'){ exitCamera(true); return; }
   const k = e.key.toLowerCase();
   if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
   if (!state) return;
@@ -14,7 +16,7 @@ window.addEventListener('keydown', e => {
   if (k === 'i') { openPanel('inventory'); return; }
   if (k === 'g') { openPanel('guide'); return; }
   if (k === 'n') { openPanel('directory'); return; }
-  if (k === 'p') { openPanel('phone'); return; }
+  if (k === 'p') { openPhone(); return; }
   keys.add(k);
 });
 window.addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
@@ -86,7 +88,7 @@ function interact(){
 }
 
 const PHONE_PANELS = ['phone','notifs','chats','chat','family','people','person','profile','history'];
-$('phoneBtn').addEventListener('click', () => { if (panelState && PHONE_PANELS.includes(panelState.kind)) closePanel(); else if (!panelState) openPanel('phone'); });
+$('phoneBtn').addEventListener('click', () => { if (phoneOpen) closePhone(); else if (camMode) exitCamera(true); else if (panelState && PHONE_PANELS.includes(panelState.kind)) closePanel(); else if (!panelState && !sceneBusy) openPhone(); });
 
 /* =========================================================
    TRAFFIC
@@ -187,6 +189,7 @@ function update(dt){
 
   const gm = dt * TIME_SCALE * (state.speed || 1);
   advanceTime(gm);
+  phoneTick(gm);
   state.energy = clamp(state.energy - gm * (0.03 + (player.moving ? (state.riding ? 0.025 : 0.065) : 0)) * (state.happy < 20 ? 1.3 : 1), 0, 100);
   state.hunger = clamp(state.hunger - gm * 0.06, 0, 100);
   if (state.energy <= 0) state.health = clamp(state.health - gm * 0.25, 0, 100);
@@ -272,7 +275,7 @@ function updateHUD(){
   hud.bh.style.width = state.health + '%'; hud.be.style.width = state.energy + '%'; hud.bf.style.width = state.hunger + '%'; hud.br.style.width = state.rep + '%';
   hud.nh.textContent = Math.round(state.health); hud.ne.textContent = Math.round(state.energy); hud.nf.textContent = Math.round(state.hunger); hud.nr.textContent = Math.round(state.rep);
   hud.bhp.style.width = state.happy + '%'; hud.nhp.textContent = Math.round(state.happy);
-  const nb = state.pending.length + Object.values(state.unread).reduce((a, b) => a + b, 0);
+  const nb = state.pending.length + Object.values(state.unread).reduce((a, b) => a + b, 0) + (state.phone ? state.phone.sms.filter(x => !x.read && !x.ev).length : 0);
   hud.badge.textContent = nb; hud.badge.style.display = nb ? 'flex' : 'none';
   hud.goalBox.style.display = (state.guide || state.nav) ? '' : 'none';
   hud.be.style.background = state.energy < 20 ? '#ff8a3d' : '#ffd23f';

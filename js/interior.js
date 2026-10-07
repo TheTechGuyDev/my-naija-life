@@ -791,6 +791,7 @@ function sleepScene(night){
     {wait:500},
     {fade:night ? '😴 Zzz... Good night.' : '😴 A quick nap...', ms:1600, fx:() => {
       const hr = hour();
+      chargePhone(night ? 100 : PH().battery + 35);
       if (night){ advanceTime(hr >= 18 ? (1440 - state.minutes) + 360 : 360 - state.minutes); gain('energy', gainE); gain('health', 10); gain('hunger', -15); gain('happy', Math.round(homeComfort() / 2)); }
       else { state.daily.naps = (state.daily.naps || 0) + 1; advanceTime(120); gain('energy', 25); gain('hunger', -5); }
     }},

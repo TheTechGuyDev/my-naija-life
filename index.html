@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="My Naija Life">
 <title>My Naija Life</title>
-<link rel="stylesheet" href="css/style.css?v=5.0.0">
+<link rel="stylesheet" href="css/style.css?v=5.1.0">
 </head>
 <body class="setup">
 <canvas id="game"></canvas>
@@ -60,6 +60,8 @@
 <div id="flash"></div>
 <div id="speech"><b></b><span></span></div>
 <div id="fadeScreen"><span></span></div>
+<div id="phoneSim"><div class="ph-frame"><div class="ph-screen"><div class="ph-notch"></div><div class="ph-status" id="phStatus"></div><div class="ph-app" id="phApp"></div><div class="ph-toast" id="phToast"></div><div class="ph-nav" id="phNav"><button data-nav="back" aria-label="Back">◀</button><button data-nav="home" aria-label="Home">●</button><button data-nav="close" aria-label="Close">✕</button></div></div></div></div>
+<div id="camUI"><div class="cam-frame"></div><div class="cam-bar"><button id="camSelfie">🤳 Selfie</button><button id="camShot" aria-label="Take photo"></button><button id="camDone">🖼️ Done</button></div><div class="cam-tip">Drag to frame your shot · <span id="camCount"></span></div></div>
 <div id="cineTop"></div><div id="cineBot"></div>
 
 <div id="panel">
@@ -85,9 +87,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
-  var V = '5.0.0';
+  var V = '5.1.0';
   if (!window.THREE){ document.getElementById('noThree').style.display = 'flex'; return; }
-  ['core','data','map','life','world3d','interior','ui','panels','main'].forEach(function(f){
+  ['core','data','map','life','world3d','interior','ui','panels','phone','main'].forEach(function(f){
     var s = document.createElement('script'); s.src = 'js/' + f + '.js?v=' + V; s.async = false; document.body.appendChild(s);
   });
 })();

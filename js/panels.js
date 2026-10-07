@@ -348,7 +348,7 @@ Object.assign(PANELS, {
     title: 'Menu', sub: `${state.name} · Age ${ageNow()} · Day ${state.day} · ${AREA.name}, ${AREA.city}`,
     body: '',
     options: [
-      opt('Phone 📱', 'Chats, family, notifications', () => { openPanel('phone'); return false; }),
+      opt('Phone 📱', 'Calls, chats, NaijaGram, bank, camera', () => { closePanel(); openPhone(); return false; }),
       opt('Life Profile 🪪', 'Your life at a glance', () => { openPanel('profile'); return false; }),
       opt('Life Guide 🧭', 'Tips, eating and road safety', () => { openPanel('guide'); return false; }),
       opt('Directory 🗺️', 'Navigate to any place', () => { openPanel('directory'); return false; }),

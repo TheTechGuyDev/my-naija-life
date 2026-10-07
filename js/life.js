@@ -617,7 +617,7 @@ function fireEvent(id, ctx){
   const e = EVENT[id]; if (!e) return;
   state.evCool[id] = state.day + (e.cool || 5);
   const inst = {id, ctx:ctx || {}, day:state.day, key:Date.now() + '_' + Math.random()};
-  if (e.phone && !state.noPhone){ state.pending.push(inst); toast(`📱 ${evTitle(inst)}`, 'info'); sfx('ring'); }
+  if (e.phone && !state.noPhone){ state.pending.push(inst); if (typeof phoneIncoming === 'function') phoneIncoming(inst); else { toast(`📱 ${evTitle(inst)}`, 'info'); sfx('ring'); } }
   else queueNow(inst);
 }
 function queueNow(inst){
@@ -627,7 +627,7 @@ function queueNow(inst){
   nowQueue.push(inst);
   flushQueue();
 }
-function flushQueue(){ if (state && !panelState && nowQueue.length) openPanel('event', nowQueue.shift()); }
+function flushQueue(){ if (state && !panelState && !phoneOpen && !camMode && !sceneBusy && nowQueue.length) openPanel('event', nowQueue.shift()); }
 const evTitle = inst => EVENT[inst.id].title(inst.ctx);
 function resolveEvent(inst, idx, silent){
   const e = EVENT[inst.id], o = e.options(inst.ctx)[idx];
@@ -645,6 +645,7 @@ function dailyLife(){
   if (!state.nin && state.ninReadyDay && state.day >= state.ninReadyDay){
     state.nin = true; addHistory('NIN issued by NIMC', '🪪');
     toast('📱 SMS from NIMC: Your NIN has been generated. You can now write JAMB, bank and serve NYSC.', 'good');
+    if (typeof smsAdd === 'function') smsAdd('NIMC', `Dear ${state.name}, your NIN has been generated: ${String(rint(10000000000, 99999999999))}. Keep it safe. Do not share your NIN with strangers.`);
   }
   if (state.day > 1 && (state.day - 1) % YEAR_DAYS === 0){
     const a = ageNow();
@@ -695,6 +696,7 @@ function dailyLife(){
   if (state.heat > 50) dh -= 1;
   if (famAvg() < 40) dh -= 1;
   gain('happy', dh);
+  if (typeof phoneDaily === 'function') phoneDaily();
   const expired = state.pending.filter(x => state.day - x.day >= 2);
   expired.forEach(x => resolveEvent(x, EVENT[x.id].ignore, true));
 }

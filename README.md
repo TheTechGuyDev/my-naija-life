@@ -12,7 +12,7 @@ Pick your name, gender, faith and area (Ikeja, Yaba, Surulere, Lekki, Wuse 2, Bo
 
 - **Life:** age and birthdays, health, energy, hunger, happiness and reputation, a Life Profile and a Life History timeline.
 - **People:** 16 NPCs with personalities (ambitious, religious, materialistic, jealous, loyal and more), interests and memory. You can go from stranger to friend, close friend, talking stage, dating and a serious relationship. Gist, hangouts, dates, gifts, jealousy, cheating and breakups.
-- **Phone:** NaijaChat, calls, transfers, notifications, family, people, profile and history.
+- **Phone simulator (V5.1):** a full NaijaOS phone with lock screen and apps: Phone (contacts, recents, keypad, real ringing incoming calls and conversations, airtime), Messages (SMS, bank alerts, scams), NaijaChat (WhatsApp-style chats, typing, family group), NaijaGram (feed, likes, posts, followers, going viral, brand deals), Camera and Gallery (real photos of the 3D world), NaijaBank (PIN, transfers, history, failed transfers), MyTel (airtime and data bundles), Maps, News, My Life and Settings. Battery drains and charges when you sleep.
 - **Family:** parents and siblings in your hometown who call, need help and celebrate your wins.
 - **Life events:** malaria, NEPA outages, floods, rent increases, scams, loans to friends, weddings, bonuses, fuel price hikes and more, each with choices.
 - **Path:** NIN (NIMC) → JAMB → university (lectures, exams, carryovers, SIWES) → NYSC → CV → interviews → jobs. Side hustles, Yahoo and police, housing and an okada.
@@ -44,7 +44,8 @@ Pick your name, gender, faith and area (Ikeja, Yaba, Surulere, Lekki, Wuse 2, Bo
 | `js/world3d.js` | 3D rendering: buildings, roads, people, cars, lighting |
 | `js/interior.js` | Walk-in interiors, furniture models, home layouts, scenes and speech bubbles |
 | `js/ui.js` | Toasts, sound, building panels |
-| `js/panels.js` | Setup, phone, people, family, events, Life Profile |
+| `js/panels.js` | Setup, people, family, events, Life Profile, home and shop panels |
+| `js/phone.js` | The phone simulator (NaijaOS) and all its apps |
 | `js/main.js` | Input, traffic, game loop, HUD, boot |
 
 Saves are kept in the browser and upgrade automatically between versions. Older single-file versions are kept in `versions/`.
