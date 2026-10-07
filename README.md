@@ -15,6 +15,7 @@ Pick your name, gender, faith and area (Ikeja, Yaba, Surulere, Lekki, Wuse 2, Bo
 - **People:** 16 NPCs with personalities (ambitious, religious, materialistic, jealous, loyal and more), interests and memory. You can go from stranger to friend, close friend, talking stage, dating and a serious relationship. Gist, hangouts, dates, gifts, jealousy, cheating and breakups.
 - **Phone simulator (V5.1):** a full NaijaOS phone with lock screen and apps: Phone (contacts, recents, keypad, real ringing incoming calls and conversations, airtime), Messages (SMS, bank alerts, scams), NaijaChat (WhatsApp-style chats, typing, family group), NaijaGram (feed, likes, posts, followers, going viral, brand deals), Camera and Gallery (real photos of the 3D world), NaijaBank (PIN, transfers, history, failed transfers), MyTel (airtime and data bundles), Maps, News, My Life and Settings. Battery drains and charges when you sleep.
 - **Family:** parents and siblings in your hometown who call, need help and celebrate your wins.
+- **Marriage and children (V5.3):** buy a ring and propose, then go through the introduction with your partner's family, the bride price and list, a traditional wedding, and a church wedding, nikkah or court wedding (each played out in the church, mosque or LG hall). Your spouse moves in and is at home in the evenings. Married life includes housekeeping money, in-law requests, date nights, trying for a baby, antenatal care, labour (hospital or birth attendant), the naming ceremony, children growing up at home, choosing a public or private school and paying school fees every term.
 - **Life events:** malaria, NEPA outages, floods, rent increases, scams, loans to friends, weddings, bonuses, fuel price hikes and more, each with choices.
 - **Path:** NIN (NIMC) → JAMB → university (lectures, exams, carryovers, SIWES) → NYSC → CV → interviews → jobs. Side hustles, Yahoo and police, housing and an okada.
 - **World:** 3D city with real street names, traffic lights, zebra crossings, accidents and GPS directions.
@@ -48,6 +49,7 @@ Pick your name, gender, faith and area (Ikeja, Yaba, Surulere, Lekki, Wuse 2, Bo
 | `js/ui.js` | Toasts, sound, building panels |
 | `js/panels.js` | Setup, people, family, events, Life Profile, home and shop panels |
 | `js/phone.js` | The phone simulator (NaijaOS) and all its apps |
+| `js/marriage.js` | Proposal, wedding steps, spouse, pregnancy, birth, naming, children and school fees |
 | `js/main.js` | Input, traffic, game loop, HUD, boot |
 
 Saves are kept in the browser and upgrade automatically between versions. Older single-file versions are kept in `versions/`.

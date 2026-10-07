@@ -172,8 +172,8 @@ Object.assign(PANELS, {
       if (p.stage === 'talking') opts.push(opt(`Ask ${n.g === 'f' ? 'her' : 'him'} to be your ${n.g === 'f' ? 'girlfriend' : 'boyfriend'} ❤️`, 'Make it official', () => { const r = actAskOut(n); relResult(n, r.ok ? 'You are now dating! ❤️' : 'Not yet...', r.line); return false; },
         state.partner && state.partner !== n.id ? `You're already dating ${NPC[state.partner].name}.` : p.cool > state.day ? 'Give it a couple of days.' : p.rom < 40 ? `Build more romance first (${Math.round(p.rom)}/40).` : null, 'cur'));
       if (p.stage === 'dating') opts.push(opt('Make it serious 💑', 'A committed relationship', () => { relResult(n, 'Serious relationship 💑', actSerious(n)); return false; }, p.rom < 70 ? `Romance needs to be 70+ (${Math.round(p.rom)}).` : state.day - p.since < 4 ? `Date for at least 4 days first (${state.day - p.since}/4).` : null, 'cur'));
-      if (p.stage === 'serious') opts.push(opt('Talk about marriage 💍', 'Introduction, family meeting, wedding', () => {}, 'Introduction and marriage arrive in the next update (V5).'));
-      if (rom) opts.push(opt(p.stage === 'talking' ? 'Stop talking 🚪' : 'Break up 💔', 'End the relationship', () => { openPanel('confirmBreak', n); return false; }, null, 'danger'));
+      if (typeof marriageOpts === 'function') opts.push(...marriageOpts(n));
+      if (rom) opts.push(opt(p.stage === 'talking' ? 'Stop talking 🚪' : p.stage === 'married' ? 'Divorce ⚖️' : 'Break up 💔', p.stage === 'married' ? 'End the marriage' : 'End the relationship', () => { openPanel('confirmBreak', n); return false; }, null, 'danger'));
       opts.push(opt('Ask for advice 💡', 'Get a life tip', () => { panelState.line = pick(TIPS); }));
       opts.push(opt('Ask for directions 🧭', 'Where should I go next?', () => { const g = goal(); panelState.line = g.to ? `Your next stop? ${B[g.to].name}, at ${addressOf(B[g.to])}.` : 'Just enjoy your day!'; }));
     }
@@ -304,7 +304,7 @@ Object.assign(PANELS, {
     const j = state.job ? JOB[state.job] : null, U = state.uni, d = state.degree, F = state.family;
     const pn = state.partner ? NPC[state.partner] : null;
     const talking = Object.keys(state.people).filter(id => state.people[id].stage === 'talking').map(id => NPC[id].name);
-    const relTxt = pn ? `${P(pn.id).stage === 'serious' ? 'Serious relationship' : 'Dating'} with ${pn.name}` : talking.length ? `Talking to ${talking.join(', ')}` : 'Single';
+    const relTxt = pn ? `${{serious:'Serious relationship with', engaged:'Engaged to', married:'Married to'}[P(pn.id).stage] || 'Dating'} ${pn.name}` : talking.length ? `Talking to ${talking.join(', ')}` : 'Single';
     const worth = state.money + state.bank + (state.hasOkada ? 600000 : 0);
     const sibs = F.members.filter(m => m.key.startsWith('sib')).length;
     return {
@@ -319,6 +319,7 @@ Object.assign(PANELS, {
         <b>Education</b><span>${d ? `B.Sc. ${DEPTS[d.dept].name} (${d.cls})` : U ? `${U.level}L${U.carry ? ' (carryover)' : ''}` : state.jamb ? `JAMB ${state.jamb}` : 'SSCE'}${state.nysc >= 3 ? ' · NYSC ✅' : ''}</span>
         <b>NIN</b><span>${state.nin ? 'Issued ✅' : 'Not yet'}</span>
         <b>Relationship</b><span>${relTxt}</span>
+        <b>Children</b><span>${(state.kids || []).length ? state.kids.map(k => `${esc(k.name)} (${Math.floor((state.day - k.born) / YEAR_DAYS)})`).join(', ') : 'None'}${state.preg ? ` · Baby due Day ${state.preg.due}` : ''}</span>
         <b>Friends</b><span>${friendIds(30).length}</span>
         <b>Family</b><span>Parents + ${sibs} sibling${sibs !== 1 ? 's' : ''} in ${F.town} · Bond ${Math.round(famAvg())}</span>
         <b>Faith</b><span>${relWord[state.religion]}</span>

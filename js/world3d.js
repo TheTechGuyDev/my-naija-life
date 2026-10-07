@@ -788,7 +788,7 @@ function buildActors(){
 function npcLabelText(n){
   if (n.police) return n.name;
   const st = stageOf(n.id);
-  const ic = {talking:' 💬', dating:' ❤️', serious:' 💑', friend:' ⭐', close:' 💛', ex:' 💔'}[st] || '';
+  const ic = {talking:' 💬', dating:' ❤️', serious:' 💑', engaged:' 💍', married:' 💍', friend:' ⭐', close:' 💛', ex:' 💔'}[st] || '';
   return (st === 'stranger' ? n.role : n.name) + ic;
 }
 function refreshLabel(id, nn){

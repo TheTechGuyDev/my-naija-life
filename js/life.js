@@ -710,6 +710,7 @@ function dailyLife(){
   if (famAvg() < 40) dh -= 1;
   gain('happy', dh);
   if (typeof phoneDaily === 'function') phoneDaily();
+  if (typeof familyDaily === 'function') familyDaily();
   const expired = state.pending.filter(x => state.day - x.day >= 2);
   expired.forEach(x => resolveEvent(x, EVENT[x.id].ignore, true));
 }

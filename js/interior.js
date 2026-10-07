@@ -473,8 +473,9 @@ function buildHome(inst){
   station(inst, 'kitchen', S_.kitchen[0], S_.kitchen[1], '🍳 Kitchen', () => openPanel('kitchen'));
   if (S_.fridge && hasItem('fridge')) station(inst, 'fridge', S_.fridge[0], S_.fridge[1], '🧊 Fridge', () => openPanel('kitchen'));
   station(inst, 'bath', S_.bath[0], S_.bath[1], '🚿 Bathroom', () => openPanel('bath'));
-  if (S_.guest) station(inst, 'guest', S_.guest[0], S_.guest[1], '🛏️ Guest room', () => toast('Your guest room. Family visitors and, later, your children will sleep here.', 'info'));
+  if (S_.guest) station(inst, 'guest', S_.guest[0], S_.guest[1], '🛏️ Guest room', () => toast(KIDS().length ? 'The children\'s room. 🧸' : 'Your guest room. Family visitors and, later, your children will sleep here.', 'info'));
   station(inst, 'exit', S_.exit[0], S_.exit[1], '🚪 Go outside', () => exitBuilding(), {r:0.9});
+  if (typeof homeFamily === 'function') homeFamily(inst);
 }
 
 /* =========================================================
