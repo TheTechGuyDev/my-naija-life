@@ -82,7 +82,7 @@ function findTarget(){
 }
 function interact(){
   if (paused || !target || sceneBusy) return;
-  if (target.type === 's'){ target.s.act(target.s); return; }
+  if (target.type === 's'){ if (inside) inside.lastStation = target.s; target.s.act(target.s); return; }
   if (target.type === 'b'){ if (state.nav === target.b.id) state.nav = null; if (hasInterior(target.b.id)) enterBuilding(target.b.id); else openPanel(target.b.id); }
   else { target.n.wait = 6; openPanel('npc', target.n); }
 }
@@ -341,6 +341,7 @@ function enterWorld(fresh){
 function startNewLife(setup){
   state = newState(setup);
   player.x = state.px; player.y = state.py; player.face = Math.PI;
+  if (!(player.x > 0 && player.y > 0)){ player.x = B.home.frontX; player.y = B.home.frontY + 6; }
   genNews();
   panelEl.classList.remove('show'); panelState = null;
   enterWorld(true);

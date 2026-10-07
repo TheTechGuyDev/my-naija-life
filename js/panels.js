@@ -38,6 +38,7 @@ function personBody(n, live){
 }
 
 Object.assign(PANELS, {
+  atm: ATM_PANEL,
   setup: () => ({
     title: 'My Naija Life 🇳🇬',
     sub: 'Create your character and choose where you will live. You start at age 18.',

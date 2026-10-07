@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="My Naija Life">
 <title>My Naija Life</title>
-<link rel="stylesheet" href="css/style.css?v=5.1.0">
+<link rel="stylesheet" href="css/style.css?v=5.2.0">
 </head>
 <body class="setup">
 <canvas id="game"></canvas>
@@ -87,9 +87,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
-  var V = '5.1.0';
+  var V = '5.2.0';
   if (!window.THREE){ document.getElementById('noThree').style.display = 'flex'; return; }
-  ['core','data','map','life','world3d','interior','ui','panels','phone','main'].forEach(function(f){
+  ['core','data','map','life','world3d','interior','interiors2','ui','panels','phone','main'].forEach(function(f){
     var s = document.createElement('script'); s.src = 'js/' + f + '.js?v=' + V; s.async = false; document.body.appendChild(s);
   });
 })();

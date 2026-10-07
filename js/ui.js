@@ -341,11 +341,11 @@ const PANELS = {
         opt('Bribe the officer 💸', `${fmt(bribe)} · May or may not work`, () => {
           if (!spend(bribe)) return;
           d.bribeTried = true;
-          if (Math.random() < 0.6){ state.heat = clamp(state.heat - 15, 0, 100); gain('rep', -2); result('Released 😮‍💨', '<p>"Oya go, and make we no see you again." You walked out of the station.</p>'); return false; }
+          if (Math.random() < 0.6){ state.heat = clamp(state.heat - 15, 0, 100); gain('rep', -2); releaseCell(); result('Released 😮‍💨', '<p>"Oya go, and make we no see you again." You walked out of the station.</p>'); return false; }
           toast('Oga collected the money and said e no reach! You are still in the cell.', 'bad');
         }, d.bribeTried ? 'The officer already "collected" from you.' : null),
-        opt('Pay bail ⚖️', `${fmt(250000)} · Official bail`, () => { if (!spend(250000)) return; state.heat = clamp(state.heat - 25, 0, 100); gain('rep', -8); result('Out on bail ⚖️', '<p>You paid your bail and walked out. Your name is now in the police records.</p>'); return false; }),
-        opt('Hire a lawyer 👨🏾‍⚖️', `${fmt(500000)} · Case dismissed`, () => { if (!spend(500000)) return; state.heat = 0; gain('rep', -2); result('Case dismissed 👨🏾‍⚖️', '<p>Your lawyer got the case thrown out for lack of evidence. Clean slate... for now.</p>'); return false; }),
+        opt('Pay bail ⚖️', `${fmt(250000)} · Official bail`, () => { if (!spend(250000)) return; state.heat = clamp(state.heat - 25, 0, 100); gain('rep', -8); releaseCell(); result('Out on bail ⚖️', '<p>You paid your bail and walked out. Your name is now in the police records.</p>'); return false; }),
+        opt('Hire a lawyer 👨🏾‍⚖️', `${fmt(500000)} · Case dismissed`, () => { if (!spend(500000)) return; state.heat = 0; gain('rep', -2); releaseCell(); result('Case dismissed 👨🏾‍⚖️', '<p>Your lawyer got the case thrown out for lack of evidence. Clean slate... for now.</p>'); return false; }),
         opt('Stay in the cell ⛓️', 'Detained 3 days · Lose your job', () => { detain(); return false; }, null, 'danger')
       ]
     };
@@ -622,10 +622,12 @@ function renderPanel(){
     b.innerHTML = `<b>${o.label}</b>${o.note ? `<span>${o.note}</span>` : ''}`;
     b.addEventListener('click', () => {
       if (o.why){ toast(o.why, 'bad'); return; }
+      const t0 = state ? absMin() : 0, pk = panelState && panelState.kind;
       const r = o.action();
       if (state) updateHUD();
       if (r !== false && panelState) renderPanel();
       saveGame(true);
+      if (r !== false && state && inside && panelState && pk === inside.id && absMin() - t0 >= 10 && typeof actionScene === 'function') actionScene(o.label, absMin() - t0);
     });
     pOpts.appendChild(b);
   });

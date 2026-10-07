@@ -9,6 +9,7 @@ Pick your name, gender, faith and area (Ikeja, Yaba, Surulere, Lekki, Wuse 2, Bo
 ## Features
 
 - **Walk-in interiors (V5):** your home has real rooms that change with your housing level (face-me-I-face-you, self-contain, mini flat, 2-bedroom). Sleep in your bed, cook in the kitchen, watch TV, study at your desk, bathe. Furniture and paint from HomeStyle Furniture appear in your home. NIMC is a full walk-through: ticket, queue, form, photo, fingerprints and signature.
+- **Every building has an inside (V5.2):** bank (tellers, ATMs, customer service), university (lecture theatre, admissions, bursary), Business Hub (open office, reception, interview room, HR), hospital (consulting room, pharmacy, ward), buka, market stalls, barber, cyber cafe, police station (with a real cell), church, mosque (ablution and prayer rows), Chill Spot (bar, big screen, pool table), estate agent, Oga Motors showroom, Local Govt town hall, NYSC secretariat and the Hustle Hub. Staff greet you, and actions play out in place: you sit for lectures and exams, sit across the interview panel, lie in the ward bed, eat at the buka table and watch football on the sofa. Arrests put you in the police cell and accidents wake you up in the hospital ward.
 
 - **Life:** age and birthdays, health, energy, hunger, happiness and reputation, a Life Profile and a Life History timeline.
 - **People:** 16 NPCs with personalities (ambitious, religious, materialistic, jealous, loyal and more), interests and memory. You can go from stranger to friend, close friend, talking stage, dating and a serious relationship. Gist, hangouts, dates, gifts, jealousy, cheating and breakups.
@@ -42,7 +43,8 @@ Pick your name, gender, faith and area (Ikeja, Yaba, Surulere, Lekki, Wuse 2, Bo
 | `js/map.js` | City layout, addresses, walking and GPS pathfinding |
 | `js/life.js` | Save/migration, time, education, jobs, crime, relationships, family, events, daily life |
 | `js/world3d.js` | 3D rendering: buildings, roads, people, cars, lighting |
-| `js/interior.js` | Walk-in interiors, furniture models, home layouts, scenes and speech bubbles |
+| `js/interior.js` | Interior engine, furniture models, home layouts, NIMC, scenes and speech bubbles |
+| `js/interiors2.js` | All other building interiors, action scenes, exam and interview seats, police cell, hospital ward, ATM |
 | `js/ui.js` | Toasts, sound, building panels |
 | `js/panels.js` | Setup, people, family, events, Life Profile, home and shop panels |
 | `js/phone.js` | The phone simulator (NaijaOS) and all its apps |

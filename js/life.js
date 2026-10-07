@@ -54,14 +54,15 @@ const fuelMod = () => state.day < (state.fuelShockUntil || 0) ? 1.12 : 1;
 const price = base => Math.max(10, Math.round(base * state.priceMod * AREA.cost * fuelMod() / 10) * 10);
 const rentOf = i => Math.round(HOUSING[i].rent * AREA.cost * (state.rentMod || 1) / 1000) * 1000;
 const hour = () => Math.floor(state.minutes / 60) % 24;
-const inHours = (a, b) => hour() >= a && hour() < b;
+const inHours = (a, b) => a <= b ? (hour() >= a && hour() < b) : (hour() >= a || hour() < b);
 const absMin = () => (state.day - 1) * 1440 + state.minutes;
 const yearsPassed = () => Math.floor((state.day - 1) / YEAR_DAYS);
 const ageNow = () => state.age0 + yearsPassed();
 
 function saveGame(silent){
   if (!state) return;
-  state.px = player.x; state.py = player.y;
+  if (typeof inside !== 'undefined' && inside && B[inside.id]){ const b = B[inside.id]; state.px = b.frontX; state.py = b.frontY + (b.door === 's' ? 6 : -6); }
+  else { state.px = player.x; state.py = player.y; }
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); if (!silent) toast('Game saved.', 'info'); }
   catch (e) { if (!silent) toast('Could not save on this browser.', 'bad'); }
 }
@@ -76,6 +77,7 @@ function loadGame(){
     migrate(d);
     state = Object.assign(newState({name:d.name, gender:d.gender, area:d.area, religion:d.religion}), d);
     player.x = state.px; player.y = state.py;
+    if (!(player.x > 0 && player.y > 0)){ player.x = B.home.frontX; player.y = B.home.frontY + 6; }
     state.nextEventMin = Math.max(state.nextEventMin || 0, absMin() + 180);
     return true;
   } catch (e) { console.error(e); return false; }
@@ -131,7 +133,8 @@ function paidRent(rent){ state.rentStrikes = 0; state.rentDueDay = state.day + 7
 function faint(){
   payBill(20000);
   state.health = 45; state.energy = 40; state.hunger = Math.max(state.hunger, 40); gain('rep', -3);
-  player.x = B.hospital.frontX; player.y = B.hospital.frontY; state.riding = false;
+  state.riding = false;
+  if (typeof toHospital === 'function') toHospital(); else { player.x = B.hospital.frontX; player.y = B.hospital.frontY; }
   advanceTime(360);
   addHistory('Collapsed and woke up in hospital', '🏥');
   toast('You collapsed! You woke up at General Hospital. Bill: ₦20,000. Eat and rest to avoid this.', 'bad');
@@ -144,7 +147,7 @@ function accident(car){
   const bill = 35000 + (state.riding ? 50000 : 0);
   const paid = payBill(bill);
   const wasRiding = state.riding; state.riding = false;
-  player.x = B.hospital.frontX; player.y = B.hospital.frontY;
+  if (typeof toHospital === 'function') toHospital(); else { player.x = B.hospital.frontX; player.y = B.hospital.frontY; }
   advanceTime(360);
   sfx('crash');
   const fl = $('flash'); fl.style.transition = 'none'; fl.style.opacity = '0.9'; requestAnimationFrame(() => { fl.style.transition = 'opacity 1.2s'; fl.style.opacity = '0'; });
@@ -163,7 +166,14 @@ function draw(bank, n){
     return {q, opts:order.map(i => o[i]), ans:order.indexOf(0)};
   });
 }
-function startQuiz(cfg){ quiz = {cfg, i:0, score:0, hints:cfg.hints || 0, removed:[]}; openPanel('quiz'); }
+function startQuiz(cfg){
+  quiz = {cfg, i:0, score:0, hints:cfg.hints || 0, removed:[]};
+  const seat = inside && inside.def.quizSeat ? inside.def.quizSeat(inside, cfg) : null;
+  if (!seat){ openPanel('quiz'); return; }
+  const q = quiz; q.back = {x:player.x, y:player.y, face:player.face};
+  closePanel();
+  runScene([{to:{x:seat.x, z:seat.z, face:seat.face}, pose:'sit', y:0}, {say:seat.say, ms:2000}]).then(() => { if (quiz === q) openPanel('quiz'); });
+}
 function answerQuiz(k){
   const Q = quiz.cfg.questions[quiz.i];
   if (k === Q.ans){ quiz.score++; toast('Correct ✅', 'good'); }
@@ -173,6 +183,7 @@ function answerQuiz(k){
 }
 function finishQuiz(){
   const q = quiz; quiz = null;
+  if (q.back){ player.x = q.back.x; player.y = q.back.y; player.face = q.back.face; player.pose = null; player.poseY = 0; }
   q.cfg.onDone(q.score, q.cfg.questions.length);
   if (panelState && panelState.kind === 'quiz') closePanel();
 }
@@ -254,12 +265,14 @@ function hustleBlock(h){
 }
 function arrest(reason){
   state.arrests++; addHistory('Arrested by the police', '🚔'); gain('happy', -10);
-  player.x = B.police.frontX; player.y = B.police.frontY; state.riding = false;
+  state.riding = false;
+  if (typeof jailPlayer === 'function') jailPlayer(); else { player.x = B.police.frontX; player.y = B.police.frontY; }
   let seized = 0;
   if (state.heat >= 60){ seized = Math.round(state.money * 0.4); state.money -= seized; }
   openPanel('arrest', {reason, seized, bribeTried:false});
 }
 function detain(){
+  if (typeof releaseCell === 'function') releaseCell();
   advanceTime(3 * 1440);
   state.health = clamp(state.health - 25, 10, 100); state.energy = 25; state.hunger = 20;
   gain('rep', -15); gain('happy', -10); addHistory('Spent 3 days in police detention', '⛓️'); state.heat = clamp(state.heat - 40, 0, 100);
