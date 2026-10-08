@@ -79,12 +79,18 @@ function findTarget(){
     const d = Math.hypot(player.x - n.x, player.y - n.y);
     if (d < 28 && d < bd){ bd = d; best = {type:'n', n}; }
   });
+  if (typeof GHOSTS !== 'undefined') GHOSTS.forEach(g => {
+    if (g.away) return;
+    const d = Math.hypot(player.x - g.x, player.y - g.y);
+    if (d < 30 && d < bd){ bd = d; best = {type:'n', n:g}; }
+  });
   return best;
 }
 function interact(){
   if (paused || !target || sceneBusy) return;
   if (target.type === 's'){ if (inside) inside.lastStation = target.s; target.s.act(target.s); return; }
   if (target.type === 'b'){ if (state.nav === target.b.id) state.nav = null; if (hasInterior(target.b.id)) enterBuilding(target.b.id); else openPanel(target.b.id); }
+  else if (target.n.real) openPanel('realPlayer', target.n);
   else { target.n.wait = 6; openPanel('npc', target.n); }
 }
 

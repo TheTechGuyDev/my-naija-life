@@ -2,7 +2,7 @@
 /* =========================================================
    MY NAIJA LIFE · core constants and helpers
    ========================================================= */
-const VERSION = '5.4.0';
+const VERSION = '6.0.0';
 const T = 40, COLS = 60, ROWS = 40, WW = COLS * T, WH = ROWS * T;
 const S = 0.08;                     // pixels -> metres (1 tile = 3.2 m)
 const TIME_SCALE = 1.5;             // game minutes per real second (normal speed)

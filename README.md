@@ -27,6 +27,15 @@ Pick your name, gender, faith and area (Ikeja, Yaba, Surulere, Lekki, Wuse 2, Bo
 - **Announcements** sent from the dashboard reach every player as an SMS and a pop-up.
 - The backend is Supabase. `supabase/schema.sql` creates the tables and the security rules. `js/config.js` holds the project URL and the public anon key. With an empty config the game runs offline as before.
 
+## Social: real players (V6)
+
+- **Real players in your city:** other signed-in players in the same area walk around your streets with a purple 🌐 name tag and appear as pink dots on the minimap. Walk up to them to see their life, follow them or wave.
+- **NaijaGram 🌍 Naija tab:** real photo posts from every player, with likes and comments. Posting from the Me tab also shares to everyone. Tap a player to see their profile, follow or wave.
+- **Rankings app 🏆:** top players by money, respect, followers, family size and longest life.
+- **Share my life story 📤:** makes a life card image to post on X or WhatsApp, with a link to your public page (`player.html?u=username`).
+- **Admin:** a Posts tab to hide or delete posts.
+- Database: run `supabase/v6_social.sql` once (it is also included in `schema.sql`).
+
 ## Controls
 
 | Action | PC | Mobile |
@@ -59,6 +68,8 @@ Pick your name, gender, faith and area (Ikeja, Yaba, Surulere, Lekki, Wuse 2, Bo
 | `js/config.js` | Supabase URL and public key |
 | `js/cloud.js` | Sign up / sign in, online saves, admin actions, announcements |
 | `admin.html`, `js/admin.js`, `css/admin.css` | Admin dashboard |
+| `js/social.js` | Real players in the city, NaijaGram posts, likes, comments, follows, waves, rankings, life-story card |
+| `player.html` | Public player page used by shared links |
 | `supabase/schema.sql` | Database tables and security rules |
 | `js/marriage.js` | Proposal, wedding steps, spouse, pregnancy, birth, naming, children and school fees |
 | `js/main.js` | Input, traffic, game loop, HUD, boot |

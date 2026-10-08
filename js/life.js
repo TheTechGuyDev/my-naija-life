@@ -359,7 +359,7 @@ const did = (id, k) => P(id).days[k] === state.day;
 const mark = (id, k) => { P(id).days[k] = state.day; };
 const npcAge = n => n.age + yearsPassed();
 const canDate = n => n.g !== state.gender && !n.taken;
-const npcDisplay = n => (n.police || stageOf(n.id) !== 'stranger') ? n.name : `the ${n.role.toLowerCase()}`;
+const npcDisplay = n => n.real ? n.name : (n.police || stageOf(n.id) !== 'stranger') ? n.name : `the ${n.role.toLowerCase()}`;
 function friendIds(min, needNum){ return Object.keys(state.people).filter(id => NPC[id] && state.people[id].rel >= (min || 30) && (!needNum || (state.people[id].num && !state.noPhone))); }
 
 function compat(n){

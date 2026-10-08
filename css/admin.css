@@ -132,3 +132,11 @@ body.busy{cursor:progress}
   .acts{grid-template-columns:1fr} .kv{grid-template-columns:110px 1fr} .stats{grid-template-columns:repeat(2,1fr)}
   .hrow{grid-template-columns:100px 1fr 34px}
 }
+
+/* posts moderation */
+.postgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
+.pcard img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#000}
+.pcard .pb{padding:10px 12px;display:flex;flex-direction:column;gap:6px;flex:1}
+.pcard .pa{display:flex;gap:6px;margin-top:auto}
+.pcard.off{opacity:.5}

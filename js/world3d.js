@@ -886,6 +886,7 @@ function render(dt, now){
     animPerson(n.p, n.moving, n.ph, false, 0.6);
     n.label.visible = Math.hypot(player.x - n.x, player.y - n.y) < 90;
   });
+  if (typeof ghostFrame === 'function') ghostFrame(dt);
   cars.forEach(c => { const [x, y] = carXY(c); c.mesh.position.set(x * S, 0, y * S); });
 
   if (target){
@@ -940,6 +941,7 @@ function drawMini(){
   BUILDINGS.forEach(b => { m.fillStyle = b.id === tid ? '#ffd23f' : b.roof; m.fillRect(b.x * T * sx, b.y * T * sy, b.w * T * sx, b.h * T * sy); });
   if (PATH.length > 1){ m.strokeStyle = '#ffd23f'; m.lineWidth = 3; m.beginPath(); PATH.forEach((p, i) => i ? m.lineTo(p.x * sx, p.y * sy) : m.moveTo(p.x * sx, p.y * sy)); m.stroke(); }
   npcs.forEach(n => { m.fillStyle = n.police ? '#4d7cff' : '#f0f0f0'; m.fillRect(n.x * sx - 2, n.y * sy - 2, 4, 4); });
+  if (typeof GHOSTS !== 'undefined') GHOSTS.forEach(g => { if (g.away) return; m.fillStyle = '#ff4fd8'; m.beginPath(); m.arc(g.x * sx, g.y * sy, 3.5, 0, Math.PI * 2); m.fill(); });
   const mx = player.x * sx, my = player.y * sy;
   m.save(); m.translate(mx, my); m.rotate(-camS.yaw);
   m.fillStyle = 'rgba(255,255,255,.25)'; m.beginPath(); m.moveTo(0, 0); m.arc(0, 0, 26, -Math.PI / 2 - 0.5, -Math.PI / 2 + 0.5); m.closePath(); m.fill();

@@ -254,3 +254,9 @@ body.cam #hudWrap,body.cam #topRight,body.cam #hint,body.cam #actBtn{display:non
   .ph-callscr{padding-top:.8em}
 }
 body.busy #pOpts{opacity:.55;pointer-events:none}
+
+/* V6 social */
+.ph-tabs.scroll{overflow-x:auto}
+.ph-tabs.scroll button{flex:0 0 auto;padding:.7em .8em;white-space:nowrap}
+.ph-rank{width:1.8em;text-align:center;font-size:1.05em}
+.ph-row.me{background:#eafff2}

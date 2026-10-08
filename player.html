@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Naija Life · Player</title>
+<meta name="description" content="See this player's life in My Naija Life, then start your own. A free 3D Nigerian life simulator.">
+<meta property="og:title" content="My Naija Life 🇳🇬">
+<meta property="og:description" content="Study, hustle, fall in love, marry and raise a family in a 3D Naija. See this player's life and start yours, free.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#06170f;--card:#0d2419;--line:#1d3a2b;--text:#f2f8f4;--muted:#9fbcab;--green:#0b8a4a;--accent:#7dffa8;--gold:#ffd23f}
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 50% -10%,#0f4a31 0%,var(--bg) 60%);color:var(--text);font:15px/1.5 Inter,system-ui,sans-serif;min-height:100vh}
+  .wrap{max-width:720px;margin:0 auto;padding:28px 16px 60px}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:22px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.02em}
+  .flag{width:24px;height:17px;border-radius:3px;background:linear-gradient(90deg,#008751 33%,#fff 33% 66%,#008751 66%)}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#fff;text-decoration:none;font-weight:700;padding:11px 18px;border-radius:12px}
+  .btn.big{font-size:17px;padding:15px 22px;width:100%;justify-content:center;background:var(--gold);color:#1a1a1a}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
+  h1{margin:0;font-size:38px;line-height:1.1}
+  .sub{color:var(--muted);margin-top:6px}
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:18px}
+  .cell{background:rgba(255,255,255,.04);border-radius:12px;padding:12px 14px}
+  .cell .k{color:var(--muted);font-size:12px;font-weight:600}
+  .cell .v{font-weight:700;margin-top:2px}
+  .sec{margin:26px 0 10px;font-weight:800;color:var(--accent);font-size:13px;letter-spacing:.06em}
+  .story div{padding:10px 0;border-bottom:1px solid var(--line)}
+  .story div:last-child{border:0}
+  .story small{color:var(--muted);margin-left:6px}
+  .posts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .posts img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block}
+  .cta{margin-top:28px;text-align:center}
+  .cta p{color:var(--muted)}
+  .empty{color:var(--muted);text-align:center;padding:40px 0}
+  @media (max-width:480px){ h1{font-size:30px} .grid{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div class="brand"><span class="flag"></span>MY NAIJA LIFE</div><a class="btn" href="./">Play free</a></div>
+  <div id="root" class="empty">Loading…</div>
+  <div class="cta"><a class="btn big" href="./">🇳🇬 Start your own Naija life, free</a><p>Study, hustle, fall in love, marry and raise a family in a 3D Naija. Plays in your browser on phone or PC.</p></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/config.js?v=6.0.0"></script>
+<script>
+(async function(){
+  const root = document.getElementById('root');
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
+  const naira = n => '₦' + Math.round(+n || 0).toLocaleString('en-NG');
+  const u = new URLSearchParams(location.search).get('u');
+  if (!u || !window.supabase || !CLOUD_CONFIG.url){ root.textContent = 'Player not found.'; return; }
+  const sb = window.supabase.createClient(CLOUD_CONFIG.url, CLOUD_CONFIG.key, {auth:{persistSession:false}});
+  const {data:p} = await sb.from('players_public').select('*').ilike('username', u.replace(/[\\%_]/g, '\\$&')).limit(1).maybeSingle();
+  if (!p){ root.textContent = `No player called @${u} yet.`; return; }
+  document.title = `${p.char_name} (@${p.username}) · My Naija Life`;
+  const {data:posts} = await sb.from('posts').select('id,image,caption').eq('user_id', p.user_id).eq('hidden', false).order('created_at', {ascending:false}).limit(9);
+  const cell = (k, v) => `<div class="cell"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`;
+  root.className = '';
+  root.innerHTML = `<div class="card">
+      <h1>${esc(p.char_name)}</h1>
+      <div class="sub">@${esc(p.username)} · Age ${p.age} · Day ${p.game_day} · ${esc(p.area)}</div>
+      <div class="grid">
+        ${cell('💼 Occupation', p.job)}${cell('🎓 Education', p.education)}
+        ${cell('💞 Relationship', p.relationship + (p.children ? ` · ${p.children} child${p.children > 1 ? 'ren' : ''}` : ''))}${cell('🏠 Home', p.housing)}
+        ${cell('💰 Net worth', naira(p.net_worth))}${cell('📸 NaijaGram', (p.followers || 0).toLocaleString() + ' followers')}
+      </div>
+    </div>
+    ${(p.story || []).length ? `<div class="sec">LATEST IN THIS LIFE</div><div class="card story">${p.story.slice().reverse().map(h => `<div>${esc(h.i || '•')} ${esc(h.t)}<small>Day ${h.d}</small></div>`).join('')}</div>` : ''}
+    ${(posts || []).length ? `<div class="sec">NAIJAGRAM</div><div class="posts">${posts.map(x => `<img src="${esc(x.image)}" alt="${esc(x.caption || '')}" title="${esc(x.caption || '')}">`).join('')}</div>` : ''}`;
+})();
+</script>
+</body>
+</html>

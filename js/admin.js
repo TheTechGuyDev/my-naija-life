@@ -10,7 +10,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp
 const naira = n => '₦' + Math.round(+n || 0).toLocaleString('en-NG');
 const DAY = 864e5;
 let sb = null, me = null;
-let PROFILES = [], SAVES = {}, EVENTS = [], ANNS = [];
+let PROFILES = [], SAVES = {}, EVENTS = [], ANNS = [], POSTS = [];
 
 function toast(t, ms){ const el = $('toast'); el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => el.hidden = true, ms || 2600); }
 function ago(ts){
@@ -55,18 +55,20 @@ $('refreshBtn').onclick = () => loadAll();
 async function loadAll(quiet){
   document.body.classList.add('busy');
   const cols = 'user_id,char_name,gender,area,game_day,age,money,job,education,relationship,children,housing,version,updated_at';
-  const [p, s, e, a] = await Promise.all([
+  const [p, s, e, a, po] = await Promise.all([
     sb.from('profiles').select('*').order('created_at', {ascending:false}).limit(5000),
     sb.from('saves').select(cols).limit(5000),
     sb.from('events').select('*').order('created_at', {ascending:false}).limit(300),
-    sb.from('announcements').select('*').order('id', {ascending:false}).limit(50)
+    sb.from('announcements').select('*').order('id', {ascending:false}).limit(50),
+    sb.from('posts').select('id,user_id,username,char_name,caption,image,hidden,created_at').order('created_at', {ascending:false}).limit(60)
   ]);
   document.body.classList.remove('busy');
   const err = p.error || s.error || e.error || a.error;
   if (err){ toast('Could not load data: ' + err.message, 5000); return; }
+  POSTS = po.error ? [] : po.data;
   PROFILES = p.data; SAVES = {}; s.data.forEach(r => SAVES[r.user_id] = r); EVENTS = e.data; ANNS = a.data;
   $('updated').textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  renderOverview(); renderPlayers(); renderFeed(); renderAnns();
+  renderOverview(); renderPlayers(); renderFeed(); renderAnns(); renderPosts();
   if (!quiet) toast('Data loaded');
 }
 
@@ -224,6 +226,17 @@ function feedHTML(list, own){
 }
 function renderFeed(){ const t = $('evType').value; $('feed').innerHTML = feedHTML(EVENTS.filter(e => !t || e.type === t)); }
 $('evType').addEventListener('input', renderFeed);
+
+/* ---------- posts moderation ---------- */
+function renderPosts(){
+  $('postGrid').innerHTML = POSTS.length ? POSTS.map(p => `<div class="pcard${p.hidden ? ' off' : ''}"><img src="${esc(p.image)}" alt=""><div class="pb"><b>@${esc(p.username)}</b><span class="muted small">${esc(p.char_name || '')} · ${ago(p.created_at)}${p.hidden ? ' · hidden' : ''}</span><span class="small">${esc(p.caption || '')}</span><div class="pa"><button class="btn ghost" data-phide="${p.id}" data-on="${p.hidden ? 0 : 1}">${p.hidden ? 'Unhide' : 'Hide'}</button><button class="btn danger" data-pdel="${p.id}">Delete</button></div></div></div>`).join('') : '<div class="empty">No posts yet. They appear when players share photos on NaijaGram.</div>';
+}
+$('postGrid').addEventListener('click', async e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.phide){ const {error} = await sb.from('posts').update({hidden:t.dataset.on === '1'}).eq('id', t.dataset.phide); toast(error ? error.message : 'Updated.'); }
+  else if (t.dataset.pdel && confirm('Delete this post permanently?')){ const {error} = await sb.from('posts').delete().eq('id', t.dataset.pdel); toast(error ? error.message : 'Deleted.'); }
+  loadAll(true);
+});
 
 /* ---------- announcements ---------- */
 function renderAnns(){

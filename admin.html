@@ -7,7 +7,7 @@
 <title>My Naija Life · Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/admin.css?v=5.4.0">
+<link rel="stylesheet" href="css/admin.css?v=6.0.0">
 </head>
 <body>
 
@@ -31,6 +31,7 @@
       <button data-tab="overview" class="on">Overview</button>
       <button data-tab="players">Players</button>
       <button data-tab="activity">Activity</button>
+      <button data-tab="posts">Posts</button>
       <button data-tab="announce">Announcements</button>
     </nav>
     <div class="top-r">
@@ -92,6 +93,12 @@
       <div class="card"><div id="feed" class="feed big"></div></div>
     </div>
 
+    <!-- POSTS -->
+    <div class="tab" id="tab-posts" hidden>
+      <div class="toolbar"><span class="muted small">Latest 60 NaijaGram posts by real players. Hide anything inappropriate.</span></div>
+      <div class="postgrid" id="postGrid"></div>
+    </div>
+
     <!-- ANNOUNCEMENTS -->
     <div class="tab" id="tab-announce" hidden>
       <div class="grid2">
@@ -120,7 +127,7 @@
 <div id="toast" class="toast" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=5.4.1"></script>
-<script src="js/admin.js?v=5.4.0"></script>
+<script src="js/config.js?v=6.0.0"></script>
+<script src="js/admin.js?v=6.0.0"></script>
 </body>
 </html>
