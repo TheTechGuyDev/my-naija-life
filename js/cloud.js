@@ -162,7 +162,8 @@ async function cloudTick(){
   if (!sb || !cloudUser || document.hidden) return;
   beatN++;
   try {
-    const {data:prof} = await sb.from('profiles').select('banned,ban_reason,play_minutes').eq('id', cloudUser.id).maybeSingle();
+    const {data:prof} = await sb.from('profiles').select('banned,ban_reason,play_minutes,is_admin').eq('id', cloudUser.id).maybeSingle();
+    if (prof) cloudProfile.is_admin = prof.is_admin;
     if (prof && prof.banned){ cloudProfile.banned = true; cloudProfile.ban_reason = prof.ban_reason; saveGame(true); openPanel('banned'); paused = true; return; }
     await sb.from('profiles').update({last_seen:new Date().toISOString(), play_minutes:((prof && prof.play_minutes) || 0) + 1}).eq('id', cloudUser.id);
     if (!state) return;
@@ -240,6 +241,7 @@ Object.assign(PANELS, {
 const _menuC = PANELS.menu;
 PANELS.menu = () => {
   const r = _menuC();
+  if (cloudProfile && cloudProfile.is_admin) r.options.splice(1, 0, opt('Admin dashboard 🛠️', 'Opens in a new tab', () => { window.open('admin.html', '_blank'); return false; }, null, 'cur'));
   if (sb) r.options.splice(1, 0, opt(cloudUser ? 'Account ☁️' : 'Save online ☁️', cloudUser ? (cloudProfile && cloudProfile.username ? '@' + cloudProfile.username : cloudUser.email) : 'Create an account to keep your life', () => { openPanel('account'); return false; }, null, cloudUser ? '' : 'cur'));
   return r;
 };
