@@ -84,7 +84,7 @@ function doIntro(){
   runScene([
     {fade:myFam ? `🏡 ${n.name}'s family visits the ${state.family.surname}s in ${state.family.town}...` : `🚌 Travelling to ${w.town} to meet the ${w.surname} family...`, ms:1800},
     {say:[{name:myFam ? `Mr. ${state.family.surname}` : `Mr. ${w.surname} (${w.dad})`}, myFam ? `So you are the young person asking for our daughter's hand. Sit down, let us talk.` : `Young ${state.gender === 'f' ? 'lady' : 'man'}, what do you do for a living? How will you take care of our ${n.g === 'f' ? 'daughter' : 'son'}?`], ms:2600},
-    {say:['player', state.job ? `I work as ${JOB[state.job].name}, sir. I will take good care of ${himHer(n)}.` : state.uni ? 'I am still in school, sir, but I have plans.' : 'I am hustling, sir. Things will get better.'], ms:2300},
+    {say:['player', state.job ? `I work as ${jobTitle()}, sir. I will take good care of ${himHer(n)}.` : state.uni ? 'I am still in school, sir, but I have plans.' : 'I am hustling, sir. Things will get better.'], ms:2300},
     {say:[{name:`Mrs. ${myFam ? state.family.surname : w.surname}`}, ok ? 'Hmm. We like you. You have our blessing! 🙏🏾' : 'Come back when you are more settled. Our child deserves better.'], ms:2400},
     {fx:() => { advanceTime(720); gain('energy', -15); }}
   ]).then(() => {

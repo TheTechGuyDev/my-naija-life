@@ -142,7 +142,7 @@ async function cloudPush(force){
   const row = {
     user_id:cloudUser.id, data:state, version:VERSION, updated_at:new Date().toISOString(),
     char_name:state.name, gender:state.gender, area:AREA ? AREA.name : state.area, game_day:state.day, age:ageNow(),
-    money:Math.round(state.money + state.bank), job:j ? j.name : state.uni ? `Student ${state.uni.level}L` : state.nysc === 2 ? 'Corps member' : 'Unemployed',
+    money:Math.round(state.money + state.bank + bizWorth()), job:j ? jobTitle() : state.uni ? `Student ${state.uni.level}L` : state.nysc === 2 ? 'Corps member' : 'Unemployed',
     education:state.degree ? `B.Sc. ${DEPTS[state.degree.dept].name} (${state.degree.cls})` : state.uni ? `${DEPTS[state.uni.dept].name} ${state.uni.level}L` : state.jamb ? 'JAMB passed' : 'SSCE',
     relationship:pn ? `${STAGE_LABEL[stageOf(pn.id)] || ''} · ${pn.name}` : 'Single', children:(state.kids || []).length, housing:HOUSING[state.housing].name
   };

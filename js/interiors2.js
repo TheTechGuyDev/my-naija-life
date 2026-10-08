@@ -343,7 +343,7 @@ function buildCyber(inst){
   onWall(inst, FURN.sign('CYBER CAFE · Browsing · Printing · Scanning', 4.6, 0.4, '#00b894'), 4.5, 2.45, 0);
   onWall(inst, FURN.sign('NO YAHOO YAHOO IN THIS CAFE!', 2.2, 0.45, '#c0392b'), 0, 1.7, 5.2);
   const glow = new THREE.PointLight(0x00e0b0, 0.6, 7, 2); glow.position.set(inst.ox + 4.5, 2.4, inst.oz + 1.5); inst.group.add(glow);
-  station(inst, 'counter', 6.9, 5.6, '🖨️ Attendant (printing)', () => serve(inst, inst.att, () => (hour() >= 8 || hour() < 2) ? 'Wetin you wan print? Browsing na ₦500 per hour.' : 'We don close.', 'cyber'));
+  station(inst, 'counter', 6.9, 5.6, '🖨️ Attendant (printing)', () => serve(inst, inst.att, () => inHours(8, 2) ? 'Wetin you wan print? Browsing na ₦500 per hour.' : 'We don close.', 'cyber'));
   station(inst, 'pc', 4.0, 2.25, '💻 Computers', () => serve(inst, null, '', 'cyber'));
 }
 
@@ -418,7 +418,7 @@ function buildJoint(inst){
   put(inst, FURN.plasticSet('#e0559b'), 10.3, 1.6, 0);
   onWall(inst, FURN.sign('CHILL SPOT 🍻 Pepper soup · Football · Vibes', 4.2, 0.45, '#e0559b'), 6, 2.48, 0);
   const pink = new THREE.PointLight(0xff4fa3, 0.9, 9, 2); pink.position.set(inst.ox + 3, 2.5, inst.oz + 3); inst.group.add(pink);
-  const open = () => hour() >= 12 || hour() < 2;
+  const open = () => inHours(12, 2);
   station(inst, 'bar', 6, 2.75, '🍻 Bar', () => serve(inst, inst.barman, () => open() ? pick(['Wetin I go give you? Cold one?', 'Pepper soup dey hot today!', 'Big man! Welcome.']) : 'We never open. Come back 12.', 'joint'));
   station(inst, 'tv', 10.0, 5.9, '⚽ Big screen', () => serve(inst, null, '', 'joint'));
   station(inst, 'pool', 3.2, 6.45, '🎱 Pool table', () => {

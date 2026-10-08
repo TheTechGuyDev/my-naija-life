@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="My Naija Life">
 <title>My Naija Life</title>
-<link rel="stylesheet" href="css/style.css?v=6.0.0">
+<link rel="stylesheet" href="css/style.css?v=6.1.0">
 </head>
 <body class="setup">
 <canvas id="game"></canvas>
@@ -29,7 +29,7 @@
       <div class="row"><span>😊</span><div class="bar"><i id="bHappy"></i></div><span class="num" id="nHappy">0</span></div>
     </div>
     <div class="card">
-      <div class="big" id="hTime">07:00</div>
+      <div class="big" id="hTime" title="Game time: a full game day passes in about 16 real minutes. Every place is open 24 hours.">07:00</div>
       <div class="lbl small" id="hDay">Day 1</div>
       <div class="lbl small" id="hJob">Unemployed</div>
       <div class="lbl small" id="hHeat">🚨 Heat 0</div>
@@ -88,9 +88,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 (function(){
-  var V = '6.0.0';
+  var V = '6.1.0';
   if (!window.THREE){ document.getElementById('noThree').style.display = 'flex'; return; }
-  ['config','core','data','map','life','world3d','interior','interiors2','ui','panels','phone','marriage','cloud','social','main'].forEach(function(f){
+  ['config','core','data','map','life','world3d','interior','interiors2','ui','panels','phone','marriage','career','business','cloud','social','main'].forEach(function(f){
     var s = document.createElement('script'); s.src = 'js/' + f + '.js?v=' + V; s.async = false; document.body.appendChild(s);
   });
 })();

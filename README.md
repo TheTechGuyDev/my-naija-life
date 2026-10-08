@@ -36,6 +36,12 @@ Pick your name, gender, faith and area (Ikeja, Yaba, Surulere, Lekki, Wuse 2, Bo
 - **Admin:** a Posts tab to hide or delete posts.
 - Database: run `supabase/v6_social.sql` once (it is also included in `schema.sql`).
 
+## Open 24/7, careers and businesses (V6.1)
+
+- **Every place is open round the clock.** The clock is game time: a full game day passes in about 16 real minutes, with day and night.
+- **Career ladders:** every job has levels (for example Junior Developer → Software Developer → Senior Developer → Tech Lead → Engineering Manager → CTO). Performance rises with shifts, overtime and good choices in workplace events, and falls when you miss weekday shifts. Ask HR for a promotion review when you qualify. Miss three weekdays in a row and you are sacked.
+- **Businesses:** register a business name with CAC at the Local Govt Secretariat, then open a POS kiosk, provisions store, buka restaurant or dispatch logistics company (Menu → My businesses, or the Business phone app). Hire staff with different skills and traits, buy stock, set prices, advertise, supervise, upgrade or sell. Every morning you get the previous day's profit or loss, with theft, stock-outs, task force visits and big orders.
+
 ## Controls
 
 | Action | PC | Mobile |
@@ -66,6 +72,8 @@ Pick your name, gender, faith and area (Ikeja, Yaba, Surulere, Lekki, Wuse 2, Bo
 | `js/panels.js` | Setup, people, family, events, Life Profile, home and shop panels |
 | `js/phone.js` | The phone simulator (NaijaOS) and all its apps |
 | `js/config.js` | Supabase URL and public key |
+| `js/career.js` | Job ladders, performance, promotions, overtime, workplace events |
+| `js/business.js` | Business ownership: CAC, staff, stock, prices, daily profit and loss |
 | `js/cloud.js` | Sign up / sign in, online saves, admin actions, announcements |
 | `admin.html`, `js/admin.js`, `css/admin.css` | Admin dashboard |
 | `js/social.js` | Real players in the city, NaijaGram posts, likes, comments, follows, waves, rankings, life-story card |

@@ -105,7 +105,7 @@ const PANELS = {
     const open = inHours(7, 21);
     const meals = [['Akara & Pap', 1000, 25, 4], ['Jollof Rice & Chicken', 3500, 55, 8], ['Amala, Ewedu & Assorted', 2500, 45, 6], ['Rice, Beans & Plantain', 1800, 38, 5], ['Eba & Egusi Soup', 2200, 45, 6]];
     return {
-      title: "Mama Nkechi's Buka 🍛", sub: open ? 'Open 7am to 9pm. Hot food dey!' : 'Closed. Mama don go house. Opens 7am.',
+      title: "Mama Nkechi's Buka 🍛", sub: open ? 'Open 24 hours. Hot food dey!' : 'Closed. Mama don go house. Opens 7am.',
       body: `<div class="kv"><b>Your hunger</b><span>${Math.round(state.hunger)}/100 (higher is fuller)</span></div>${state.priceMod > 1.04 ? '<p><i>Mama says: "Na the news o, prices don go up small today."</i></p>' : ''}`,
       options: meals.map(([n, b, f, e]) => {
         const c = price(b);
@@ -121,7 +121,7 @@ const PANELS = {
   market: () => {
     const open = inHours(6, 20);
     return {
-      title: `${AREA.market} 🛒`, sub: open ? `Open 6am to 8pm. Food you buy goes into your Bag. To eat it: ${BAG}.` : 'Market has closed. Opens 6am.',
+      title: `${AREA.market} 🛒`, sub: open ? `Open 24 hours. Food you buy goes into your Bag. To eat it: ${BAG}.` : 'Market has closed. Opens 6am.',
       body: '',
       options: MARKET_ITEMS.map(k => {
         const it = ITEMS[k], c = price(it.price);
@@ -150,7 +150,7 @@ const PANELS = {
     }, why)));
     opts.push(opt('Withdraw ALL', fmt(state.bank), () => { state.money += state.bank; state.bank = 0; toast('All savings withdrawn.', 'good'); }, why || (state.bank <= 0 ? 'Your account is empty.' : null)));
     return {
-      title: 'Naija Trust Bank 🏦', sub: open ? 'Open 8am to 4pm · Savings earn about 11% per year' : 'Banking hall is closed. Opens 8am.',
+      title: 'Naija Trust Bank 🏦', sub: open ? 'Open 24 hours · Savings earn about 11% per year' : 'Banking hall is closed. Opens 8am.',
       body: `<div class="kv"><b>Wallet</b><span>${fmt(state.money)}</span><b>Savings</b><span>${fmt(state.bank)}</span><b>NIN</b><span>${state.nin ? 'Verified ✅' : 'Not registered ❌'}</span></div>`,
       options: opts
     };
@@ -254,8 +254,8 @@ const PANELS = {
       }, jobBlock(job)));
     });
     return {
-      title: `${B.jobs.name} 💼`, sub: 'Job openings, interviews (8am to 4pm), daily shifts (6am to 6pm) and SIWES placements.',
-      body: `<div class="kv"><b>Current job</b><span>${j ? j.name : 'Unemployed'}</span><b>Qualification</b><span>${state.degree ? `B.Sc. ${DEPTS[state.degree.dept].name} (${state.degree.cls})` : state.uni ? `Student, ${state.uni.level}L` : 'SSCE'}</span><b>NYSC</b><span>${state.nysc >= 3 ? 'Completed ✅' : 'Not completed'}</span><b>CV</b><span>${state.cv ? 'Printed ✅' : 'Not printed'}</span><b>Total earned</b><span>${fmt(state.earned)}</span></div>`,
+      title: `${B.jobs.name} 💼`, sub: 'Job openings, interviews, daily shifts and SIWES placements. Open 24 hours.',
+      body: `<div class="kv"><b>Current job</b><span>${jobTitle()}</span><b>Qualification</b><span>${state.degree ? `B.Sc. ${DEPTS[state.degree.dept].name} (${state.degree.cls})` : state.uni ? `Student, ${state.uni.level}L` : 'SSCE'}</span><b>NYSC</b><span>${state.nysc >= 3 ? 'Completed ✅' : 'Not completed'}</span><b>CV</b><span>${state.cv ? 'Printed ✅' : 'Not printed'}</span><b>Total earned</b><span>${fmt(state.earned)}</span></div>`,
       options: opts
     };
   },
@@ -284,10 +284,10 @@ const PANELS = {
   },
 
   cyber: () => {
-    const open = hour() >= 8 || hour() < 2;
+    const open = inHours(8, 2);
     const yahooCount = state.daily.yahoo || 0;
     return {
-      title: 'Cyber Cafe 💻', sub: open ? 'Open 8am to 2am. Fast browsing, printing and... other things.' : 'Closed. Opens 8am.',
+      title: 'Cyber Cafe 💻', sub: open ? 'Open 24 hours. Fast browsing, printing and... other things.' : 'Closed. Opens 8am.',
       body: `<div class="kv"><b>CV</b><span>${state.cv ? 'Printed ✅' : 'Not printed'}</span>${state.heat > 0 ? `<b>Police heat</b><span style="color:#ff8a8a">${Math.round(state.heat)}/100</span>` : ''}</div>${state.heatNews ? '<div class="warn">📰 News today: police announced a crackdown on internet fraud. Raids are more likely.</div>' : ''}`,
       options: [
         opt('Print your CV 📄', `${fmt(1000)} · Needed for professional jobs`, () => { if (!spend(1000)) return; state.cv = true; advanceTime(30); toast('CV printed. You are ready for interviews!', 'good'); }, !open ? 'The cafe is closed.' : state.cv ? 'You already have a printed CV.' : null, state.cv ? '' : 'cur'),
@@ -320,7 +320,7 @@ const PANELS = {
       if (h.kit && !state.kits[h.kit]) opts.push(opt(`Buy ${h.kitName}`, fmt(h.kitCost), () => { if (!spend(h.kitCost)) return; state.kits[h.kit] = true; toast(`You bought a ${h.kitName}. You can now run that hustle.`, 'good'); }, null, 'hint'));
       if (h.skill && !state.skills[h.skill]) opts.push(opt(`Learn: ${h.skillName}`, `${fmt(h.skillCost)} · 6 hrs`, () => { if (!spend(h.skillCost)) return; state.skills[h.skill] = true; advanceTime(360); gain('energy', -15); toast(`Training complete! You can now do ${h.name}.`, 'good'); }, !inHours(8, 16) ? 'Training runs 8am to 4pm.' : null, 'hint'));
     });
-    return {title:'Hustle Hub 🔥', sub:'Legit side hustles. One hustle per day, 7am to 9pm.', body:`<div class="kv"><b>Total hustle income</b><span>${fmt(state.hustleEarned)}</span></div>`, options:opts};
+    return {title:'Hustle Hub 🔥', sub:'Legit side hustles. One hustle per day.', body:`<div class="kv"><b>Total hustle income</b><span>${fmt(state.hustleEarned)}</span></div>`, options:opts};
   },
 
   police: () => ({
@@ -381,7 +381,7 @@ const PANELS = {
     const open = inHours(8, 16);
     const levyDue = state.day - state.levyDay >= 7;
     return {
-      title: 'Local Government Secretariat 🏛️', sub: open ? 'Civic centre open 8am to 4pm.' : 'Office is closed. Opens 8am.',
+      title: 'Local Government Secretariat 🏛️', sub: open ? 'Civic centre open 24 hours.' : 'Office is closed. Opens 8am.',
       body: `<div class="kv"><b>NIN</b><span>${state.nin ? 'Registered ✅' : 'Not registered ❌'}</span><b>Development levy</b><span>${levyDue ? 'Due' : 'Paid this week ✅'}</span></div>`,
       options: [
         opt('Register NIN 🪪', 'Free · 2 hours · Needed for bank and NYSC', () => { state.nin = true; advanceTime(120); gain('rep', 5); sfx('ding'); toast('NIN registered! You can now bank and serve NYSC.', 'good'); }, !open ? 'The office is closed.' : state.nin ? 'You already have an NIN.' : null, state.nin ? '' : 'cur'),
@@ -431,9 +431,9 @@ const PANELS = {
   }),
 
   joint: () => {
-    const open = hour() >= 12 || hour() < 2;
+    const open = inHours(12, 2);
     return {
-      title: 'Chill Spot 🍻', sub: open ? 'Pepper soup, football and good vibes. Open 12pm to 2am.' : 'Closed. Opens 12pm.',
+      title: 'Chill Spot 🍻', sub: open ? 'Pepper soup, football and good vibes. Open 24 hours.' : 'Closed. Opens 12pm.',
       body: '',
       options: [
         opt('Watch football ⚽', `${fmt(1000)} · 2 hours · +10 energy`, () => { if (!spend(1000)) return; advanceTime(120); gain('energy', 10); gain('happy', 4); toast(pick(['GOAL!!! The whole place scatter!', 'Na draw. Everybody vex.', 'Your team won! You dey happy.']), 'good'); }, open ? null : 'Chill Spot is closed.'),
@@ -503,7 +503,7 @@ const PANELS = {
       title: 'Life Guide 🧭', sub: 'Your path from JJC to big man/woman.',
       body: `<ol>${steps.map(([t, d]) => `<li>${d ? '✅' : '⬜'} ${t}</li>`).join('')}</ol>
         <div class="note"><b>🧭 Directions:</b> follow the yellow dots on the ground and the arrow beside your goal. Tap 🗺️ to navigate anywhere.</div>
-        <div class="note"><b>🍛 How to eat:</b> Mama Nkechi's Buka (7am to 9pm) for hot food, or buy food at ${AREA.market} and eat it from your Bag. Sleeping makes you hungry, so eat breakfast.</div>
+        <div class="note"><b>🍛 How to eat:</b> Mama Nkechi's Buka for hot food, or buy food at ${AREA.market} and eat it from your Bag. Sleeping makes you hungry, so eat breakfast.</div>
         <div class="note"><b>🚦 Road safety:</b> cross at zebra crossings. Cars stop for you there and at red traffic lights. Jaywalking can land you in hospital.</div>
         <div class="warn"><b>⚠️ Yahoo:</b> fast money at the Cyber Cafe, but it raises police heat. Expect stop-and-search, raids, arrests, bribes and bail.</div>`,
       options: [opt('Back', 'Return to menu', () => { openPanel('menu'); return false; })]

@@ -83,7 +83,7 @@ Object.assign(PANELS, {
     const open = inHours(GOV.nin.open[0], GOV.nin.open[1]);
     const status = state.nin ? 'Issued ✅' : state.ninReadyDay ? `Processing (ready Day ${state.ninReadyDay})` : 'Not enrolled ❌';
     return {
-      title: 'NIMC Enrolment Centre 🪪', sub: open ? 'National Identity Management Commission · Open 8am to 4pm' : 'Closed. Opens 8am.',
+      title: 'NIMC Enrolment Centre 🪪', sub: open ? 'National Identity Management Commission · Open 24 hours' : 'Closed. Opens 8am.',
       body: `<div class="kv"><b>Your NIN</b><span>${status}</span><b>Enrolment fee</b><span>${GOV.nin.fee ? fmt(GOV.nin.fee) : 'Free (first enrolment)'}</span></div>
         <div class="note">Bring yourself for biometrics: photo, fingerprints and signature. Your NIN is sent by SMS after processing. You need it for JAMB, banking and NYSC.</div>`,
       options: [
@@ -99,7 +99,7 @@ Object.assign(PANELS, {
   lg: () => {
     const open = inHours(8, 16), levyDue = state.day - state.levyDay >= 7;
     return {
-      title: 'Local Government Secretariat 🏛️', sub: open ? 'Civic centre open 8am to 4pm.' : 'Office is closed. Opens 8am.',
+      title: 'Local Government Secretariat 🏛️', sub: open ? 'Civic centre open 24 hours.' : 'Office is closed. Opens 8am.',
       body: `<div class="kv"><b>Development levy</b><span>${levyDue ? 'Due' : 'Paid this week ✅'}</span></div><p style="margin-top:6px;opacity:.8">NIN enrolment is done at the NIMC Enrolment Centre.</p>`,
       options: [
         opt('Pay development levy 🏛️', `${fmt(10000)} · Weekly · +3 rep`, () => { if (!spend(10000)) return; state.levyDay = state.day; gain('rep', 3); toast('Levy paid. Good citizen!', 'good'); }, !open ? 'The office is closed.' : !levyDue ? 'Already paid this week.' : null),
@@ -124,7 +124,7 @@ Object.assign(PANELS, {
       }, closed, 'hint');
     });
     const phone = state.noPhone ? [opt('Buy a new phone 📱', fmt(price(PHONE_PRICE)), () => { if (!spend(price(PHONE_PRICE))) return; state.noPhone = false; toast('New phone! Your contacts have been restored.', 'good'); }, closed, 'cur')] : [];
-    return {title:`${AREA.market} 🛒`, sub: open ? `Open 6am to 8pm. Food goes into your Bag (${BAG}). Gifts can be given to people.` : 'Market has closed. Opens 6am.', body:'', options:[...phone, ...food, ...gifts]};
+    return {title:`${AREA.market} 🛒`, sub: open ? `Open 24 hours. Food goes into your Bag (${BAG}). Gifts can be given to people.` : 'Market has closed. Opens 6am.', body:'', options:[...phone, ...food, ...gifts]};
   },
 
   inventory: () => {
@@ -313,9 +313,9 @@ Object.assign(PANELS, {
         <b>Age</b><span>${ageNow()}</span>
         <b>Location</b><span>${AREA.name}, ${AREA.city}</span>
         <b>Address</b><span>${addressOf(B.home)}</span>
-        <b>Occupation</b><span>${j ? j.name : U ? `Student (${DEPTS[U.dept].name}, ${U.level}L)` : state.nysc === 2 ? 'Corps member' : 'Unemployed'}</span>
-        <b>Income</b><span>${j ? `${fmt(j.pay)} per shift (about ${fmt(j.pay * 22)}/month)` : 'None'}</span>
-        <b>Net worth</b><span>${fmt(worth)}</span>
+        <b>Occupation</b><span>${j || (state.biz && state.biz.length) ? jobTitle() : U ? `Student (${DEPTS[U.dept].name}, ${U.level}L)` : state.nysc === 2 ? 'Corps member' : 'Unemployed'}</span>
+        <b>Income</b><span>${j ? `${fmt(shiftPay())} per shift (about ${fmt(shiftPay() * 22)}/month)` : 'None'}${(state.biz || []).length ? ` · ${state.biz.length} business${state.biz.length > 1 ? 'es' : ''}` : ''}</span>
+        <b>Net worth</b><span>${fmt(worth + bizWorth())}</span>
         <b>Education</b><span>${d ? `B.Sc. ${DEPTS[d.dept].name} (${d.cls})` : U ? `${U.level}L${U.carry ? ' (carryover)' : ''}` : state.jamb ? `JAMB ${state.jamb}` : 'SSCE'}${state.nysc >= 3 ? ' · NYSC ✅' : ''}</span>
         <b>NIN</b><span>${state.nin ? 'Issued ✅' : 'Not yet'}</span>
         <b>Relationship</b><span>${relTxt}</span>

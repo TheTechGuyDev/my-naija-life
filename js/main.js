@@ -280,8 +280,8 @@ function updateHUD(){
   hud.bank.textContent = 'Bank: ' + fmt(state.bank);
   const mm0 = Math.floor(state.minutes), hh = Math.floor(mm0 / 60), mm = mm0 % 60;
   hud.time.textContent = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-  hud.day.textContent = `${WEEKDAYS[(state.day - 1) % 7]} · Day ${state.day} · Age ${ageNow()}`;
-  hud.job.textContent = state.job ? JOB[state.job].name : state.uni ? `Student ${state.uni.level}L` : state.nysc === 2 ? 'Corper' : 'Unemployed';
+  hud.day.textContent = `${WEEKDAYS[(state.day - 1) % 7]} · Game day ${state.day} · Age ${ageNow()}`;
+  hud.job.textContent = typeof jobTitle === 'function' ? jobTitle() : state.job ? JOB[state.job].name : state.uni ? `Student ${state.uni.level}L` : state.nysc === 2 ? 'Corper' : 'Unemployed';
   hud.heat.style.display = state.heat > 0 ? 'block' : 'none';
   hud.heat.textContent = `🚨 Heat ${Math.round(state.heat)}`;
   hud.bh.style.width = state.health + '%'; hud.be.style.width = state.energy + '%'; hud.bf.style.width = state.hunger + '%'; hud.br.style.width = state.rep + '%';

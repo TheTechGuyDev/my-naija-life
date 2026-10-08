@@ -54,7 +54,9 @@ const fuelMod = () => state.day < (state.fuelShockUntil || 0) ? 1.12 : 1;
 const price = base => Math.max(10, Math.round(base * state.priceMod * AREA.cost * fuelMod() / 10) * 10);
 const rentOf = i => Math.round(HOUSING[i].rent * AREA.cost * (state.rentMod || 1) / 1000) * 1000;
 const hour = () => Math.floor(state.minutes / 60) % 24;
-const inHours = (a, b) => a <= b ? (hour() >= a && hour() < b) : (hour() >= a || hour() < b);
+// V6.1: every place is open round the clock. (Set ALWAYS_OPEN = false to bring back opening hours.)
+const ALWAYS_OPEN = true;
+const inHours = (a, b) => ALWAYS_OPEN || (a <= b ? (hour() >= a && hour() < b) : (hour() >= a || hour() < b));
 const absMin = () => (state.day - 1) * 1440 + state.minutes;
 const yearsPassed = () => Math.floor((state.day - 1) / YEAR_DAYS);
 const ageNow = () => state.age0 + yearsPassed();
@@ -249,7 +251,7 @@ function startInterview(j){
     const need = Math.ceil(n * 0.7), total = s + bonus;
     if (total >= need){
       state.job = j.id; gain('rep', 2); sfx('ding'); gain('happy', 12); addHistory(`Hired as ${j.name}`, '💼'); familyCheer(`Dad: "A ${j.name}! Well done, my child!" 💼`);
-      result('You got the job! 🎉', `<p>HR: "Congratulations ${state.name}! You resume immediately as our <b>${j.name}</b>."</p><p>Interview score: ${s}/${n}${notes.length ? ` + ${notes.join(', ')}` : ''}.</p><p>Come to the Business Hub every day (6am to 6pm) to work your shift and earn <b>${fmt(j.pay)}</b>.</p>`);
+      result('You got the job! 🎉', `<p>HR: "Congratulations ${state.name}! You resume immediately as our <b>${j.name}</b>."</p><p>Interview score: ${s}/${n}${notes.length ? ` + ${notes.join(', ')}` : ''}.</p><p>Come to the Business Hub every day to work your shift and earn <b>${fmt(j.pay)}</b>.</p>`);
     } else {
       gain('happy', -4);
       result('Application declined 😞', `<p>HR: "We regret to inform you that you were not successful at this time."</p><p>Interview score: ${s}/${n}${notes.length ? ` + ${notes.join(', ')}` : ''}. You needed ${need}.</p><div class="note">Tips: get a haircut at Kutz before interviews, build your reputation, and try again tomorrow. Keep your side hustle going meanwhile.</div>`);
@@ -315,7 +317,7 @@ function goal(o){
   if (state.pending.length && !place) return {text:`📱 You have ${state.pending.length} notification${state.pending.length > 1 ? 's' : ''}. Tap 📱 to respond.`, to:null};
   if (state.happy < 25) return {text:'You are feeling down. Hang out with friends, call your family, or relax at the Chill Spot.', to:'joint'};
   if (!state.nin){
-    if (!state.ninReadyDay) return {text:'Enrol for your NIN at the NIMC Enrolment Centre (8am to 4pm). JAMB, the bank and NYSC all need it.', to:'nimc'};
+    if (!state.ninReadyDay) return {text:'Enrol for your NIN at the NIMC Enrolment Centre. JAMB, the bank and NYSC all need it.', to:'nimc'};
     return {text:'Your NIN is processing and arrives tomorrow. Meanwhile, meet people (press E near someone) or make money at Hustle Hub.', to:'hustle'};
   }
   if (!state.degree){
@@ -332,7 +334,7 @@ function goal(o){
   if (state.nysc === 2) return {text:state.ppa < 4 ? `Serve at your PPA (${state.ppa}/4 days) at the NYSC Secretariat.` : 'Collect your NYSC discharge certificate.', to:'nysc'};
   if (!state.cv) return {text:'Print your CV at the Cyber Cafe.', to:'cyber'};
   if (!state.job) return state.daily.groomed ? {text:'Apply for jobs at the Business Hub and pass the interview.', to:'jobs'} : {text:'Get a fresh haircut at Kutz before your interview, then go to the Business Hub.', to:'barber'};
-  if (!state.daily.worked) return {text:'Go to work: the Business Hub (6am to 6pm).', to:'jobs'};
+  if (!state.daily.worked) return {text:'Go to work at the Business Hub.', to:'jobs'};
   if (!friendIds(30).length) return {text:'Make friends: walk up to people around town and talk to them. The Chill Spot is a good place to meet people.', to:'joint'};
   if (!state.daily.hustle) return {text:'Grow your side hustle at Hustle Hub.', to:'hustle'};
   return {text:'Good day! Spend time with people you care about, or go home and rest.', to:'home'};
@@ -446,7 +448,6 @@ function outingBlock(n, o){
   if (did(n.id, 'out')) return `You already went out with ${n.name} today.`;
   if (o.id === 'worship' && (state.religion === 'none' || n.rel !== state.religion)) return 'Only if you share the same faith.';
   if (state.energy < 15) return 'You are too tired to go out.';
-  if (hour() >= 23 || hour() < 7) return 'It is too late to go out now.';
   return null;
 }
 function actOuting(n, o){
@@ -714,6 +715,8 @@ function dailyLife(){
   gain('happy', dh);
   if (typeof phoneDaily === 'function') phoneDaily();
   if (typeof familyDaily === 'function') familyDaily();
+  if (typeof careerDaily === 'function') careerDaily();
+  if (typeof bizDaily === 'function') bizDaily();
   const expired = state.pending.filter(x => state.day - x.day >= 2);
   expired.forEach(x => resolveEvent(x, EVENT[x.id].ignore, true));
 }

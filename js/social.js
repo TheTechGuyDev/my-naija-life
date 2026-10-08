@@ -22,9 +22,9 @@ function publicRow(){
   const pos = inside && B[inside.id] ? {x:B[inside.id].frontX, y:B[inside.id].frontY, inside:inside.id} : {x:player.x, y:player.y, inside:null};
   return {
     user_id:cloudUser.id, username:myName(), char_name:state.name, gender:state.gender, area_id:state.area, area:`${AREA.name}, ${AREA.city}`,
-    game_day:state.day, age:ageNow(), net_worth:Math.round(state.money + state.bank + (state.hasOkada ? 600000 : 0)), rep:Math.round(state.rep),
+    game_day:state.day, age:ageNow(), net_worth:Math.round(state.money + state.bank + (state.hasOkada ? 600000 : 0) + bizWorth()), rep:Math.round(state.rep),
     followers:PH().gram.followers, children:(state.kids || []).length,
-    job:j ? j.name : state.uni ? `Student, ${state.uni.level}L` : state.nysc === 2 ? 'Corps member' : 'Unemployed',
+    job:j || (state.biz && state.biz.length) ? jobTitle() : state.uni ? `Student, ${state.uni.level}L` : state.nysc === 2 ? 'Corps member' : 'Unemployed',
     education:state.degree ? `B.Sc. ${DEPTS[state.degree.dept].name} (${state.degree.cls})` : state.uni ? `${DEPTS[state.uni.dept].name} student` : 'SSCE',
     relationship:pn ? `${STAGE_LABEL[stageOf(pn.id)] || ''} · ${pn.name}` : 'Single', housing:HOUSING[state.housing].name,
     story:state.history.slice(-8).map(h => ({d:h.d, t:h.t, i:h.i})),
