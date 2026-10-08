@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="My Naija Life">
 <title>My Naija Life</title>
-<link rel="stylesheet" href="css/style.css?v=6.1.0">
+<link rel="stylesheet" href="css/style.css?v=6.2.0">
 </head>
 <body class="setup">
 <canvas id="game"></canvas>
@@ -53,6 +53,7 @@
 
 <div id="toasts"></div>
 <div id="hint"></div>
+<div id="carHud"><div class="spd"><b id="cSpd">0</b><small>km/h</small></div><div class="cfuel"><span>⛽</span><div class="bar"><i id="cFuel"></i></div></div><span id="cDmg"></span><button id="cCam" title="Inside / outside view (C)">🎥</button><button id="cHorn" title="Horn (H)">📯</button><button id="cExit" title="Get out (E)">🚪</button></div>
 <button id="actBtn">ENTER</button>
 <div id="joy"><div id="knob"></div></div>
 <div id="joyGhost">Drag to<br>move</div>
@@ -88,9 +89,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 (function(){
-  var V = '6.1.0';
+  var V = '6.2.0';
   if (!window.THREE){ document.getElementById('noThree').style.display = 'flex'; return; }
-  ['config','core','data','map','life','world3d','interior','interiors2','ui','panels','phone','marriage','career','business','cloud','social','main'].forEach(function(f){
+  ['config','core','data','map','life','world3d','interior','interiors2','ui','panels','phone','marriage','career','business','vehicles','economy','cloud','social','main'].forEach(function(f){
     var s = document.createElement('script'); s.src = 'js/' + f + '.js?v=' + V; s.async = false; document.body.appendChild(s);
   });
 })();

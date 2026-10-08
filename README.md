@@ -42,6 +42,15 @@ Pick your name, gender, faith and area (Ikeja, Yaba, Surulere, Lekki, Wuse 2, Bo
 - **Career ladders:** every job has levels (for example Junior Developer → Software Developer → Senior Developer → Tech Lead → Engineering Manager → CTO). Performance rises with shifts, overtime and good choices in workplace events, and falls when you miss weekday shifts. Ask HR for a promotion review when you qualify. Miss three weekdays in a row and you are sacked.
 - **Businesses:** register a business name with CAC at the Local Govt Secretariat, then open a POS kiosk, provisions store, buka restaurant or dispatch logistics company (Menu → My businesses, or the Business phone app). Hire staff with different skills and traits, buy stock, set prices, advertise, supervise, upgrade or sell. Every morning you get the previous day's profit or loss, with theft, stock-outs, task force visits and big orders.
 
+## Cars, economy and transport (V6.2)
+
+- **Cars you can drive:** buy a Toyota Corolla 2010 (₦9.5m), Honda Accord 2015 (₦16m) or Lexus RX 350 (₦32m) at Oga Motors. Walk to it and press E to get in. Drive with W/S (gas, brake, reverse) and A/D (steer), Space handbrake, H horn, C to switch between the chase view and the inside view (each model has its own interior: fabric or leather, wood or metal trim, screen, ambient light). On mobile, the left stick drives. Fuel, damage, crashes with traffic and walls, hitting pedestrians, towing for parking on the road, repairs, trade-ins and selling.
+- **NNPC Filling Station** next to your home: fuel for your car and jerrycans for your generator. Petrol prices move with inflation and fuel scarcity.
+- **Inflation:** prices creep up every day (salaries follow slowly), with occasional jumps in the news. See today's numbers in the News app.
+- **Prepaid electricity:** your home uses power units every day (AC, fridge, TV, fan). Buy units in the Power ⚡ app. When they run out: generator, inverter, solar panels (HomeStyle) or no light.
+- **Public transport:** from the Directory, pick a place and walk, drive, or take a keke, danfo or ride-hailing car.
+- **Next guide:** the "Next" box now checks what is actually possible right now (daily limits, energy, money, deadlines) and tells you exactly what to do.
+
 ## Controls
 
 | Action | PC | Mobile |
@@ -74,6 +83,8 @@ Pick your name, gender, faith and area (Ikeja, Yaba, Surulere, Lekki, Wuse 2, Bo
 | `js/config.js` | Supabase URL and public key |
 | `js/career.js` | Job ladders, performance, promotions, overtime, workplace events |
 | `js/business.js` | Business ownership: CAC, staff, stock, prices, daily profit and loss |
+| `js/vehicles.js` | Cars: models, interiors, driving controller, fuel, crashes, Oga Motors and the filling station |
+| `js/economy.js` | Inflation, prepaid electricity and solar, public transport, Power app |
 | `js/cloud.js` | Sign up / sign in, online saves, admin actions, announcements |
 | `admin.html`, `js/admin.js`, `css/admin.css` | Admin dashboard |
 | `js/social.js` | Real players in the city, NaijaGram posts, likes, comments, follows, waves, rankings, life-story card |

@@ -887,10 +887,11 @@ function render(dt, now){
     n.label.visible = Math.hypot(player.x - n.x, player.y - n.y) < 90;
   });
   if (typeof ghostFrame === 'function') ghostFrame(dt);
+  if (typeof carFrame === 'function') carFrame(dt);
   cars.forEach(c => { const [x, y] = carXY(c); c.mesh.position.set(x * S, 0, y * S); });
 
   if (target){
-    const tx = target.type === 's' ? target.s.x / S : target.type === 'b' ? target.b.frontX : target.n.x, ty = target.type === 's' ? target.s.z / S : target.type === 'b' ? target.b.frontY : target.n.y;
+    const tx = target.type === 's' ? target.s.x / S : target.type === 'b' ? target.b.frontX : target.type === 'car' ? state.car.x : target.n.x, ty = target.type === 's' ? target.s.z / S : target.type === 'b' ? target.b.frontY : target.type === 'car' ? state.car.y : target.n.y;
     marker.visible = !sceneBusy;
     marker.position.set(tx * S, (target.type === 's' ? 2.45 : 2.6) + Math.sin(now / 200) * 0.15, ty * S);
     marker.rotation.y += dt * 2;
@@ -926,6 +927,7 @@ function render(dt, now){
   if (inside) intRender(dt, now); else updateOcclusion(px, pz);
   updateLighting(px, pz);
   LABELS.forEach(l => { const d = Math.hypot(l.position.x - px, l.position.z - pz); l.visible = d < 110; });
+  if (typeof driveCamera === 'function') driveCamera();
   renderer.render(scene, camera);
   updateSpeech();
   if (inside) drawMiniInterior(); else drawMini();

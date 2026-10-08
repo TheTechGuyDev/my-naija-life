@@ -25,11 +25,11 @@ const BUILDINGS = [
   {id:'nysc',     name:'NYSC Secretariat',       x:23, y:34, w:6, h:4, color:'#f3f0e0', roof:'#2e7d32', ht:6.4, rt:'flat', style:'office', door:'n', sign:'#2e7d32', tanks:1},
   {id:'hustle',   name:'Hustle Hub',             x:33, y:34, w:7, h:4, color:'#f0a35e', roof:'#7a3e12', ht:3.6, rt:'flat', style:'shop',   door:'n', sign:'#7a3e12'},
   {id:'nimc',     name:'NIMC Enrolment Centre',  x:40, y:34, w:4, h:4, color:'#e9eef0', roof:'#0a7d3b', ht:6.4, rt:'flat', style:'office', door:'n', sign:'#0a7d3b', tanks:1},
+  {id:'fuel',     name:'NNPC Filling Station',   x:9,  y:4,  w:3, h:4, color:'#f4f4f4', roof:'#0b6e3a', ht:4.6, rt:'flat', style:'shop',   door:'s', sign:'#0b6e3a'},
   {id:'furniture', name:'HomeStyle Furniture',    x:49, y:34, w:4, h:4, color:'#f3e6d0', roof:'#8a5a2b', ht:4.5, rt:'flat', style:'shop',   door:'n', sign:'#8a5a2b'}
 ];
 const DECOR = [
   {x:55, y:34, w:4, h:4, ht:6.4, color:'#c9dbe6', roof:'#8a3b22'},
-  {x:9,  y:4,  w:3, h:4, ht:3.6, color:'#f0dcc0', roof:'#6b4a2a'},
   {x:43, y:24, w:2, h:6, ht:3.6, color:'#d8c8a8', roof:'#5d4a3a', tanks:0}
 ].map(d => Object.assign({tanks:1}, d, {name:'', door:d.y > 30 ? 'n' : 's', rt:'hip', style:'res'}));
 

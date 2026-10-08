@@ -70,7 +70,9 @@ actBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagat
 
 let target = null;
 function findTarget(){
+  if (driving) return null;
   let best = null, bd = Infinity;
+  if (state.car && !inside){ const d = Math.hypot(player.x - state.car.x, player.y - state.car.y); if (d < 50){ bd = d; best = {type:'car'}; } }
   BUILDINGS.forEach(b => {
     const d = Math.hypot(player.x - b.frontX, player.y - b.frontY);
     if (d < T * 0.95 && d < bd){ bd = d; best = {type:'b', b}; }
@@ -87,7 +89,9 @@ function findTarget(){
   return best;
 }
 function interact(){
+  if (driving && !paused){ exitCar(); return; }
   if (paused || !target || sceneBusy) return;
+  if (target.type === 'car'){ if (state.car.wrecked){ toast('Your car is wrecked. Repair it at Oga Motors.', 'bad'); return; } enterCar(); return; }
   if (target.type === 's'){ if (inside) inside.lastStation = target.s; target.s.act(target.s); return; }
   if (target.type === 'b'){ if (state.nav === target.b.id) state.nav = null; if (hasInterior(target.b.id)) enterBuilding(target.b.id); else openPanel(target.b.id); }
   else if (target.n.real) openPanel('realPlayer', target.n);
@@ -148,9 +152,11 @@ function updateCars(dt){
     const lim = c.axis === 'h' ? WW : WH;
     if (c.pos > lim + 120) c.pos = -120; if (c.pos < -120) c.pos = lim + 120;
     // collision with player
-    if (c.v > 22 && lat < c.widPx / 2 + 5 && Math.abs((c.axis === 'h' ? player.x : player.y) - c.pos) < c.lenPx / 2 + 5){ accident(c); }
+    if (c.v > 22 && lat < c.widPx / 2 + (driving ? 12 : 5) && Math.abs((c.axis === 'h' ? player.x : player.y) - c.pos) < c.lenPx / 2 + (driving ? 26 : 5)){ if (driving) carHit(c); else accident(c); }
+    // your parked car blocks the lane
+    if (state.car && !driving){ const pc = state.car, lat2 = c.axis === 'h' ? Math.abs(pc.y - cy) : Math.abs(pc.x - cx), ahead2 = ((c.axis === 'h' ? pc.x : pc.y) - c.pos) * c.dir; if (lat2 < c.widPx / 2 + 12 && ahead2 > 0 && ahead2 < 140){ const want = Math.max(0, (ahead2 - c.lenPx / 2 - 34) * 1.2); if (want < c.v || want < desired) c.v = Math.min(c.v, want); } }
     // horn when a pedestrian is jaywalking in front
-    if (hornCD <= 0 && c.v > 30 && lat < c.widPx / 2 + 20 && ahead > 0 && ahead < 150 && isRoad(Math.floor(player.x / T), Math.floor(player.y / T)) && !onCross(player.x, player.y)){
+    if (!driving && hornCD <= 0 && c.v > 30 && lat < c.widPx / 2 + 20 && ahead > 0 && ahead < 150 && isRoad(Math.floor(player.x / T), Math.floor(player.y / T)) && !onCross(player.x, player.y)){
       hornCD = 4; sfx('horn'); toast('🚗 Careful! Car coming. Cross at the zebra crossing!', 'bad');
     }
   });
@@ -176,7 +182,8 @@ function update(dt){
   if (joy.active){ mx += joy.dx; my += joy.dy; }
   const len = Math.hypot(mx, my);
   player.moving = false; player.spd = 0;
-  if (len > 0.18){
+  if (driving){ driveUpdate(dt, mx, my); }
+  else if (len > 0.18){
     const n = len > 1 ? len : 1; mx /= n; my /= n;
     // Movement follows what you see: "up" always walks into the screen from the camera's current angle.
     // The basis is held while the input direction stays the same, so auto-camera swings never bend your path.
@@ -258,13 +265,13 @@ function update(dt){
 
   target = findTarget();
   const onRoadNow = isRoad(Math.floor(player.x / T), Math.floor(player.y / T)) && !onCross(player.x, player.y) && !state.riding;
-  const label = target ? (target.type === 'b' ? `Enter ${target.b.name}` : `Talk to ${npcDisplay(target.n)}`) : onRoadNow ? '⚠️ You are on the road! Cross at the zebra crossing.' : '';
+  const label = driving ? (isTouch ? 'Tap EXIT to get out of the car' : 'Driving · Press E to get out · C for the inside view') : target ? (target.type === 'b' ? `Enter ${target.b.name}` : target.type === 'car' ? `Get in your ${CAR_MODELS[state.car.model].name}` : `Talk to ${npcDisplay(target.n)}`) : onRoadNow ? '⚠️ You are on the road! Cross at the zebra crossing.' : '';
   if (label !== lastTarget){
     lastTarget = label;
     if (label){ hintEl.textContent = target ? (isTouch ? `Tap the button: ${label}` : `Press E: ${label}`) : label; hintEl.style.display = 'block'; hintEl.classList.toggle('warn', !target); }
     else hintEl.style.display = 'none';
-    actBtn.textContent = target ? (target.type === 'b' ? 'ENTER' : 'TALK') : '•';
-    actBtn.classList.toggle('dim', !target);
+    actBtn.textContent = driving ? 'EXIT' : target ? (target.type === 'b' ? 'ENTER' : target.type === 'car' ? 'DRIVE' : 'TALK') : '•';
+    actBtn.classList.toggle('dim', !target && !driving);
   }
 }
 

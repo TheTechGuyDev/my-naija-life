@@ -51,7 +51,7 @@ function genNews(){
   state.priceMod = clamp(out.reduce((a, n) => a * n.mod, 1), 0.85, 1.35);
 }
 const fuelMod = () => state.day < (state.fuelShockUntil || 0) ? 1.12 : 1;
-const price = base => Math.max(10, Math.round(base * state.priceMod * AREA.cost * fuelMod() / 10) * 10);
+const price = base => Math.max(10, Math.round(base * state.priceMod * AREA.cost * fuelMod() * (state.cpi || 1) / 10) * 10);
 const rentOf = i => Math.round(HOUSING[i].rent * AREA.cost * (state.rentMod || 1) / 1000) * 1000;
 const hour = () => Math.floor(state.minutes / 60) % 24;
 // V6.1: every place is open round the clock. (Set ALWAYS_OPEN = false to bring back opening hours.)
@@ -304,40 +304,95 @@ function spendAny(c){
 /* =========================================================
    SUGGESTED NEXT STEP (optional guide)
    ========================================================= */
+/* "Next" guide: the single most useful thing to do right now, checked against
+   what is actually possible today (daily limits, energy, money, deadlines). */
 function goal(o){
-  const place = o && o.placeOnly;
+  const place = o && o.placeOnly, hr = hour(), night = hr >= 22 || hr < 5;
+  const cash = state.money + state.bank;
   const fullBag = Object.keys(state.inv).some(k => state.inv[k] > 0 && ITEMS[k] && ITEMS[k].food);
+  const tired = need => state.energy < need;
+  const restGoal = need => ({text:`You need ${need} energy for this and have ${Math.round(state.energy)}. ${hr >= 18 || hr < 5 ? 'Go home and sleep.' : 'Go home and take a nap, or eat to recover.'}`, to:'home'});
+  const earnGoal = (amt, what) => ({text:`You need ${fmt(amt)} for ${what} but have ${fmt(cash)}. ${state.job ? 'Work your shifts' : 'Do a side hustle at Hustle Hub'} to raise it.`, to:state.job ? 'jobs' : 'hustle'});
+  // 1. urgent body needs
   if (state.hunger < 30){
-    if ((state.inv.foodstuff || 0) > 0 && !(inHours(7, 21) && state.money > 5000 && !place)) return {text:'You\'re hungry! Go home and cook with your foodstuff.', to:'home'};
+    if ((state.inv.foodstuff || 0) > 0 && !place) return {text:'You\'re hungry! Go home and cook with your foodstuff.', to:'home'};
     if (fullBag) return {text:`You're hungry! ${BAG} and eat, or go to Mama Nkechi's Buka.`, to:'mamaput'};
-    return inHours(7, 21) ? {text:"You're hungry! Go and eat at Mama Nkechi's Buka.", to:'mamaput'} : {text:"You're hungry! The buka is closed. Try pepper soup at the Chill Spot, or the market from 6am.", to:hour() >= 12 || hour() < 2 ? 'joint' : 'market'};
+    return {text:"You're hungry! Go and eat at Mama Nkechi's Buka.", to:'mamaput'};
   }
-  if (state.energy < 18) return {text:'You are exhausted. Go home and sleep (after 6pm) or take a nap.', to:'home'};
-  if (state.health < 30) return {text:'Your health is low. Go to General Hospital.', to:'hospital'};
-  if (state.pending.length && !place) return {text:`📱 You have ${state.pending.length} notification${state.pending.length > 1 ? 's' : ''}. Tap 📱 to respond.`, to:null};
+  if (state.health < 30) return {text:'Your health is low. Go to General Hospital for treatment.', to:'hospital'};
+  if (state.energy < 18) return {text:hr >= 18 || hr < 5 ? 'You are exhausted. Go home and sleep.' : 'You are exhausted. Go home and take a nap.', to:'home'};
+  // 2. things waiting for you
+  if (state.preg && state.preg.labour) return {text:'Labour has started! Get to General Hospital now.', to:'hospital'};
+  if (state.pending.length && !place) return {text:`📱 You have ${state.pending.length} notification${state.pending.length > 1 ? 's' : ''} waiting. Tap 📱 to respond.`, to:null};
+  if (state.car && state.car.fuel < 4 && !place) return {text:'Your car is almost out of fuel. Drive to the NNPC Filling Station.', to:'fuel'};
+  if (state.rentDueDay - state.day <= 1 && state.money + state.bank < rentOf(state.housing)) return earnGoal(rentOf(state.housing), `rent due on Day ${state.rentDueDay}`);
+  if (state.kids && state.kids.some(k => k.sent)) return {text:`${state.kids.find(k => k.sent).name} was sent home for unpaid school fees. Pay it from Menu → Family life.`, to:null};
+  if (state.preg && !state.preg.labour && state.preg.anc < 3 && !state.daily.anc) return {text:`Baby due on Day ${state.preg.due}. Go for an antenatal check-up at General Hospital (${state.preg.anc}/3).`, to:'hospital'};
+  if (night && state.energy < 60) return {text:'It is late. Go home and sleep till morning.', to:'home'};
   if (state.happy < 25) return {text:'You are feeling down. Hang out with friends, call your family, or relax at the Chill Spot.', to:'joint'};
+  // 3. life path
   if (!state.nin){
     if (!state.ninReadyDay) return {text:'Enrol for your NIN at the NIMC Enrolment Centre. JAMB, the bank and NYSC all need it.', to:'nimc'};
-    return {text:'Your NIN is processing and arrives tomorrow. Meanwhile, meet people (press E near someone) or make money at Hustle Hub.', to:'hustle'};
+    return {text:`Your NIN arrives by SMS on Day ${state.ninReadyDay}. Meanwhile, make money at Hustle Hub or meet people around town.`, to:'hustle'};
   }
-  if (!state.degree){
-    if (!state.jamb) return {text:'Write JAMB at Unity University to gain admission (score 200+).', to:'uni'};
+  if (!state.degree && !state.job){
+    if (!state.jamb){
+      if (state.daily.jamb) return {text:'You wrote JAMB today. Try again tomorrow. Meanwhile, read at home or hustle.', to:'hustle'};
+      if (cash < 7700) return earnGoal(7700, 'JAMB registration');
+      if (tired(15)) return restGoal(15);
+      return {text:'Write JAMB at Unity University. You need 200+ to gain admission.', to:'uni'};
+    }
     const U = state.uni;
-    if (!U) return {text:'Choose your department at Unity University.', to:'uni'};
-    if (U.needSiwes) return {text:`Do your SIWES/IT at the Business Hub (${U.siwes || 0}/3 days).`, to:'jobs'};
-    if (!U.paid) return {text:`Pay your ${U.level}L school fees at Unity University.`, to:'uni'};
-    if (U.carry) return {text:U.lectures < 1 ? 'Attend 1 lecture, then rewrite your carryover exam.' : 'Rewrite your carryover exam at Unity University.', to:'uni'};
-    return {text:U.lectures < 2 ? `Attend lectures at Unity University (${U.lectures}/2 before exam).` : `Write your ${U.level}L exam at Unity University.`, to:'uni'};
+    if (!U) return cash < 200000 ? earnGoal(200000, 'acceptance and 100L fees') : {text:'Choose your department and pay your fees at Unity University.', to:'uni'};
+    if (U.needSiwes){
+      if (state.daily.siwes) return {text:`SIWES day done (${U.siwes || 0}/3). Come back tomorrow.`, to:'home'};
+      if (tired(25)) return restGoal(25);
+      return {text:`Do your SIWES/IT day at the Business Hub (${U.siwes || 0}/3 done).`, to:'jobs'};
+    }
+    if (!U.paid) return cash < 150000 ? earnGoal(150000, `${U.level}L school fees`) : {text:`Pay your ${U.level}L school fees at the Unity University bursary.`, to:'uni'};
+    const needL = U.carry ? 1 : 2;
+    if (U.lectures < needL){
+      if (state.daily.lecture) return {text:`Lecture done for today (${U.lectures}/${needL}). Study at your desk at home for an exam hint, then come back tomorrow.`, to:'home'};
+      if (tired(20)) return restGoal(20);
+      return {text:`Attend a lecture at Unity University (${U.lectures}/${needL} before the exam).`, to:'uni'};
+    }
+    if (state.daily.exam) return {text:'You wrote an exam today. Check your result and rest.', to:'home'};
+    if (tired(15)) return restGoal(15);
+    if (U.carry && cash < 20000) return earnGoal(20000, 'the carryover exam');
+    return {text:U.carry ? 'Rewrite your carryover exam at Unity University.' : `You are ready! Write your ${U.level}L exam at Unity University.`, to:'uni'};
   }
-  if (state.nysc === 0) return {text:'Register for NYSC at the NYSC Secretariat.', to:'nysc'};
-  if (state.nysc === 1) return {text:'Go to NYSC orientation camp (NYSC Secretariat).', to:'nysc'};
-  if (state.nysc === 2) return {text:state.ppa < 4 ? `Serve at your PPA (${state.ppa}/4 days) at the NYSC Secretariat.` : 'Collect your NYSC discharge certificate.', to:'nysc'};
-  if (!state.cv) return {text:'Print your CV at the Cyber Cafe.', to:'cyber'};
-  if (!state.job) return state.daily.groomed ? {text:'Apply for jobs at the Business Hub and pass the interview.', to:'jobs'} : {text:'Get a fresh haircut at Kutz before your interview, then go to the Business Hub.', to:'barber'};
-  if (!state.daily.worked) return {text:'Go to work at the Business Hub.', to:'jobs'};
+  if (state.degree && state.nysc < 3){
+    if (state.nysc === 0) return {text:'Register for NYSC at the NYSC Secretariat.', to:'nysc'};
+    if (state.nysc === 1) return {text:'Go to NYSC orientation camp at the NYSC Secretariat.', to:'nysc'};
+    if (state.ppa >= 4) return {text:'Collect your NYSC discharge certificate at the NYSC Secretariat.', to:'nysc'};
+    if (state.daily.ppa) return {text:`PPA day done (${state.ppa}/4). Come back tomorrow.`, to:'home'};
+    if (tired(25)) return restGoal(25);
+    return {text:`Serve at your PPA (${state.ppa}/4 days). Report at the NYSC Secretariat.`, to:'nysc'};
+  }
+  // 4. work
+  if (!state.job){
+    if (state.degree && !state.cv) return {text:'Print your CV at the Cyber Cafe. Professional jobs need it.', to:'cyber'};
+    const open = JOBS.filter(j => !jobBlock(j));
+    if (!open.length) return {text:'You have tried every job you qualify for today. Hustle today and apply again tomorrow.', to:'hustle'};
+    const best = open.slice().sort((a, b) => b.pay - a.pay)[0];
+    if (best.interview && !state.daily.groomed && cash > 6000) return {text:`Get a fresh haircut at Kutz first, then apply for ${best.name} at the Business Hub.`, to:'barber'};
+    return {text:`${best.interview ? 'Apply and pass the interview' : 'Take the job'}: ${best.name} (${fmt(best.pay)}/shift) at the Business Hub.`, to:'jobs'};
+  }
+  if (!state.daily.worked){
+    const j = JOB[state.job];
+    if (j.needsOkada && !state.hasOkada) return {text:'Your job needs an okada. Buy one at Oga Motors.', to:'motors'};
+    if (tired(j.energy)) return restGoal(j.energy);
+    if ((state.day - 1) % 7 < 5) return {text:`Go to work at the Business Hub as ${typeof jobTitle === 'function' ? jobTitle() : j.name}. Missing weekdays hurts your performance.`, to:'jobs'};
+  }
+  if (typeof promoBlock === 'function' && state.job && !promoBlock()) return {text:'You qualify for a promotion! Ask HR for a review at the Business Hub.', to:'jobs'};
+  if (state.biz && state.biz.length){
+    const b = state.biz.find(x => !BIZ_TYPES[x.type].stockless && x.stock < 30000) || state.biz.find(x => !x.staff.length && x.visitDay < state.day);
+    if (b) return {text:`${b.name} ${b.staff.length ? 'is running out of stock' : 'has no staff'}. Open Menu → My businesses to sort it out.`, to:null};
+  }
+  if (state.wed && !state.spouse) return {text:'Continue your wedding plans: Menu → Wedding plans.', to:null};
   if (!friendIds(30).length) return {text:'Make friends: walk up to people around town and talk to them. The Chill Spot is a good place to meet people.', to:'joint'};
-  if (!state.daily.hustle) return {text:'Grow your side hustle at Hustle Hub.', to:'hustle'};
-  return {text:'Good day! Spend time with people you care about, or go home and rest.', to:'home'};
+  if (!state.daily.hustle && hr < 21 && state.energy > 30) return {text:'Grow your income with a side hustle at Hustle Hub.', to:'hustle'};
+  return {text:'Good day! Spend time with people you care about, grow your business, or go home and rest.', to:'home'};
 }
 function navTargetId(){ return state.nav || (state.guide ? goal({placeOnly:true}).to : null); }
 
@@ -717,6 +772,8 @@ function dailyLife(){
   if (typeof familyDaily === 'function') familyDaily();
   if (typeof careerDaily === 'function') careerDaily();
   if (typeof bizDaily === 'function') bizDaily();
+  if (typeof economyDaily === 'function') economyDaily();
+  if (typeof vehiclesDaily === 'function') vehiclesDaily();
   const expired = state.pending.filter(x => state.day - x.day >= 2);
   expired.forEach(x => resolveEvent(x, EVENT[x.id].ignore, true));
 }

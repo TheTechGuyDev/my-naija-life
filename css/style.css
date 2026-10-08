@@ -260,3 +260,16 @@ body.busy #pOpts{opacity:.55;pointer-events:none}
 .ph-tabs.scroll button{flex:0 0 auto;padding:.7em .8em;white-space:nowrap}
 .ph-rank{width:1.8em;text-align:center;font-size:1.05em}
 .ph-row.me{background:#eafff2}
+
+/* V6.2 car HUD */
+#carHud{position:fixed;left:50%;bottom:calc(64px + env(safe-area-inset-bottom));transform:translateX(-50%);display:none;align-items:center;gap:10px;background:rgba(8,14,11,.82);border:1px solid rgba(125,255,168,.3);border-radius:16px;padding:8px 12px;z-index:30;color:#fff;backdrop-filter:blur(6px)}
+#carHud.show{display:flex}
+#carHud .spd{display:flex;align-items:baseline;gap:4px;min-width:84px}
+#carHud .spd b{font-size:28px;font-variant-numeric:tabular-nums;font-weight:800}
+#carHud .spd small{opacity:.7;font-size:12px}
+#carHud .cfuel{display:flex;align-items:center;gap:6px}
+#carHud .bar{width:70px;height:8px;border-radius:4px;background:rgba(255,255,255,.15);overflow:hidden}
+#carHud .bar i{display:block;height:100%;width:50%;background:#2fbf71}
+#carHud #cDmg{font-size:13px;color:#ffb347}
+#carHud button{width:40px;height:40px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:19px;cursor:pointer}
+@media (max-height:520px){ #carHud{bottom:calc(10px + env(safe-area-inset-bottom));padding:5px 9px;gap:7px} #carHud .spd b{font-size:22px} #carHud button{width:34px;height:34px;font-size:16px} }
