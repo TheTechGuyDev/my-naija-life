@@ -112,6 +112,21 @@ drop trigger if exists protect_profile on public.profiles;
 create trigger protect_profile before update on public.profiles
   for each row execute function public.protect_profile();
 
+-- a player creating their own missing profile row can never make it admin or banned
+create or replace function public.protect_profile_insert() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then
+    new.is_admin := false;
+    new.banned   := false;
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists protect_profile_insert on public.profiles;
+create trigger protect_profile_insert before insert on public.profiles
+  for each row execute function public.protect_profile_insert();
+
 -- ---------- row level security ----------
 alter table public.profiles      enable row level security;
 alter table public.saves         enable row level security;
@@ -120,11 +135,14 @@ alter table public.announcements enable row level security;
 alter table public.admin_actions enable row level security;
 
 drop policy if exists "profiles read"   on public.profiles;
+drop policy if exists "profiles insert" on public.profiles;
 drop policy if exists "profiles update" on public.profiles;
 drop policy if exists "profiles delete" on public.profiles;
 create policy "profiles read"   on public.profiles for select using (id = auth.uid() or public.is_admin());
 create policy "profiles update" on public.profiles for update using (id = auth.uid() or public.is_admin());
 create policy "profiles delete" on public.profiles for delete using (public.is_admin());
+drop policy if exists "profiles insert" on public.profiles;
+create policy "profiles insert" on public.profiles for insert with check (id = auth.uid());
 
 drop policy if exists "saves read"   on public.saves;
 drop policy if exists "saves insert" on public.saves;
@@ -153,6 +171,11 @@ create policy "actions read"   on public.admin_actions for select using (user_id
 create policy "actions apply"  on public.admin_actions for update using (user_id = auth.uid() or public.is_admin());
 create policy "actions insert" on public.admin_actions for insert with check (public.is_admin());
 create policy "actions delete" on public.admin_actions for delete using (public.is_admin());
+
+-- ---------- backfill: profiles for anyone who signed up before this file was run ----------
+insert into public.profiles (id, email, username)
+select u.id, u.email, nullif(u.raw_user_meta_data->>'username', '') from auth.users u
+on conflict do nothing;
 
 -- ---------- make yourself admin ----------
 -- After you sign up in the game with your own email, run this one line (with your email):

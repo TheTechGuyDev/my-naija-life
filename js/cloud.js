@@ -73,7 +73,14 @@ async function afterLogin(user, isNew){
   cloudUser = user;
   try {
     const {data:prof} = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
-    cloudProfile = prof || {id:user.id, email:user.email, username:(user.user_metadata || {}).username, sessions:0, play_minutes:0};
+    cloudProfile = prof;
+    if (!cloudProfile){
+      // profile row missing (signed up before the database was set up): create it now
+      const row = {id:user.id, email:user.email, username:(user.user_metadata || {}).username || null};
+      let r = await sb.from('profiles').insert(row).select().maybeSingle();
+      if (r.error && row.username){ row.username = row.username + '_' + user.id.slice(0, 4); r = await sb.from('profiles').insert(row).select().maybeSingle(); }
+      cloudProfile = r.data || Object.assign(row, {sessions:0, play_minutes:0});
+    }
     if (cloudProfile.banned){ openPanel('banned'); return; }
     sb.from('profiles').update({last_seen:new Date().toISOString(), sessions:(cloudProfile.sessions || 0) + 1, device:isTouch ? 'mobile' : 'desktop'}).eq('id', user.id).then(() => {});
     cloudLog(isNew ? 'signup' : 'login', isTouch ? 'mobile' : 'desktop');
