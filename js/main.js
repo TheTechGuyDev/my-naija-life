@@ -4,6 +4,7 @@
    ========================================================= */
 const keys = new Set();
 window.addEventListener('keydown', e => {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
   if (phoneOpen){ if (e.key === 'Escape') phBack(); return; }
   if (camMode && e.key === 'Escape'){ exitCamera(true); return; }
   const k = e.key.toLowerCase();
@@ -152,7 +153,7 @@ function updateCars(dt){
 /* =========================================================
    UPDATE
    ========================================================= */
-let lastTarget = '', hungerWarn = 0, pathTimer = 0, PATH = [], pathTo = null, lastTile = -1;
+let lastTarget = '', hungerWarn = 0, pathTimer = 0, PATH = [], pathTo = null, lastTile = -1, moveBasis = null, moveInAng = 0;
 function update(dt){
   tlClock += dt;
   if (paused) return;
@@ -171,7 +172,12 @@ function update(dt){
   player.moving = false; player.spd = 0;
   if (len > 0.18){
     const n = len > 1 ? len : 1; mx /= n; my /= n;
-    const fx = -Math.sin(camS.yaw), fz = -Math.cos(camS.yaw), rx = Math.cos(camS.yaw), rz = -Math.sin(camS.yaw);
+    // Movement follows what you see: "up" always walks into the screen from the camera's current angle.
+    // The basis is held while the input direction stays the same, so auto-camera swings never bend your path.
+    const inAng = Math.atan2(mx, -my), now = performance.now();
+    if (moveBasis === null || now - camS.lastDrag < 150 || Math.abs(turnTo(0, inAng - moveInAng, 1)) > 0.35){ moveBasis = camS.cy !== undefined ? camS.cy : camS.yaw; moveInAng = inAng; }
+    const by = moveBasis;
+    const fx = -Math.sin(by), fz = -Math.cos(by), rx = Math.cos(by), rz = -Math.sin(by);
     const wx = rx * mx + fx * -my, wz = rz * mx + fz * -my;
     const run = keys.has('shift') || Math.min(1, len) > 0.92;
     const sp = (state.riding ? 150 : run ? 62 : 38) * (inside ? 0.7 : 1) * (state.energy <= 5 || state.hunger <= 5 ? 0.55 : 1);
@@ -182,10 +188,10 @@ function update(dt){
     player.moving = true; player.spd = sp / 62;
     player.anim += dt * (state.riding ? 0 : sp * 0.17);
     player.face = turnTo(player.face, Math.atan2(wx, wz), 1 - Math.exp(-dt * 12));
-    if (state.autoCam && my < -0.3 && Math.abs(mx) < 0.6 && performance.now() - camS.lastDrag > 1500){
-      camS.yaw = turnTo(camS.yaw, player.face + Math.PI, 1 - Math.exp(-dt * 1.4));
+    if (state.autoCam && my < -0.5 && Math.abs(mx) < 0.2 && now - camS.lastDrag > 1500){
+      camS.yaw = turnTo(camS.yaw, player.face + Math.PI, 1 - Math.exp(-dt * 1.2));
     }
-  }
+  } else moveBasis = null;
 
   const gm = dt * TIME_SCALE * (state.speed || 1);
   advanceTime(gm);
@@ -285,7 +291,7 @@ function updateHUD(){
     hud.goal.textContent = g.text;
     const hs = inside.hintStation;
     hud.dist.textContent = hs ? `🧭 ${hs.label.replace(/^[^A-Za-z]*/, '')} · ${Math.max(0, Math.round(Math.hypot(hs.x - player.x * S, hs.z - player.y * S)))} m` : '';
-    if (hs){ const dx = hs.x / S - player.x, dz = hs.z / S - player.y, fx = -Math.sin(camS.yaw), fz = -Math.cos(camS.yaw), rx = Math.cos(camS.yaw), rz = -Math.sin(camS.yaw); hud.arrow.style.transform = `rotate(${Math.atan2(dx * rx + dz * rz, dx * fx + dz * fz) * 180 / Math.PI}deg)`; hud.arrow.style.opacity = '1'; } else hud.arrow.style.opacity = '0.4';
+    if (hs){ const dx = hs.x / S - player.x, dz = hs.z / S - player.y, fx = -Math.sin(camS.cy || 0), fz = -Math.cos(camS.cy || 0), rx = Math.cos(camS.cy || 0), rz = -Math.sin(camS.cy || 0); hud.arrow.style.transform = `rotate(${Math.atan2(dx * rx + dz * rz, dx * fx + dz * fz) * 180 / Math.PI}deg)`; hud.arrow.style.opacity = '1'; } else hud.arrow.style.opacity = '0.4';
     hud.loc.textContent = `Inside ${inside.name} · ${inside.id === 'home' ? HOUSING[state.housing].name + ', ' : ''}${addressOf(B[inside.id])}, ${AREA.name}`;
     return;
   }
@@ -296,7 +302,7 @@ function updateHUD(){
     hud.dist.textContent = `🧭 ${tb.name} · ${meters < 5 ? 'You are here' : meters + ' m'} · ${addressOf(tb)}`;
     const nxt = PATH[Math.min(2, PATH.length - 1)];
     const dx = nxt.x - player.x, dz = nxt.y - player.y;
-    const fx = -Math.sin(camS.yaw), fz = -Math.cos(camS.yaw), rx = Math.cos(camS.yaw), rz = -Math.sin(camS.yaw);
+    const fx = -Math.sin(camS.cy || 0), fz = -Math.cos(camS.cy || 0), rx = Math.cos(camS.cy || 0), rz = -Math.sin(camS.cy || 0);
     const ang = Math.atan2(dx * rx + dz * rz, dx * fx + dz * fz) * 180 / Math.PI;
     hud.arrow.style.transform = `rotate(${ang}deg)`; hud.arrow.style.opacity = '1';
   } else { hud.dist.textContent = tb ? `🧭 ${tb.name} · You are here` : ''; hud.arrow.style.opacity = '0.4'; }
@@ -331,7 +337,7 @@ function enterWorld(fresh){
   if (isTouch){ actBtn.style.display = 'block'; ghost.style.display = 'flex'; camGhost.style.display = 'block'; }
   if (!state.news.length) genNews();
   if (!state.family) state.family = genFamily(AREA);
-  camS.yaw = player.face + Math.PI;
+  camS.yaw = player.face + Math.PI; camS.snap = true;
   camera.position.set(player.x * S + Math.sin(camS.yaw) * 9, 4, player.y * S + Math.cos(camS.yaw) * 9);
   updateHUD();
   if (fresh) openPanel('intro');
@@ -348,5 +354,6 @@ function startNewLife(setup){
   saveGame(true);
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveGame(true); });
-if (loadGame()) enterWorld(false);
+if (typeof cloudBoot === 'function') cloudBoot();
+else if (loadGame()) enterWorld(false);
 else openPanel('setup');

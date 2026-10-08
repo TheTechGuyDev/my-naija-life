@@ -567,7 +567,7 @@ function putInside(id, lx, lz, face){
   inside = inst; state.riding = false;
   hintEl.style.display = 'none';
   player.x = (inst.ox + lx) / S; player.y = (inst.oz + lz) / S; player.face = face; player.pose = null; player.poseY = 0;
-  camS.yaw = 0; camS.dist = 7; camS.pitch = 0.8;
+  camS.yaw = 0; camS.dist = 7; camS.pitch = 0.8; camS.snap = true;
   camera.position.set(player.x * S, 6, player.y * S + 5);
   PATH = []; pathTimer = 0; lastTarget = '#';
   if (def.onEnter) def.onEnter(inst);

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>My Naija Life · Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin.css?v=5.4.0">
+</head>
+<body>
+
+<!-- LOGIN -->
+<section id="login" class="login">
+  <form id="loginForm" class="login-card">
+    <div class="brand"><span class="flag"></span>My Naija Life <b>Admin</b></div>
+    <p class="muted">Sign in with your admin account.</p>
+    <label>Email<input id="lgEmail" type="email" autocomplete="username" required></label>
+    <label>Password<input id="lgPass" type="password" autocomplete="current-password" required></label>
+    <button type="submit" class="btn primary" id="lgBtn">Sign in</button>
+    <div id="lgMsg" class="msg"></div>
+  </form>
+</section>
+
+<!-- APP -->
+<section id="app" class="app" hidden>
+  <header class="top">
+    <div class="brand"><span class="flag"></span>My Naija Life <b>Admin</b></div>
+    <nav class="tabs" id="tabs">
+      <button data-tab="overview" class="on">Overview</button>
+      <button data-tab="players">Players</button>
+      <button data-tab="activity">Activity</button>
+      <button data-tab="announce">Announcements</button>
+    </nav>
+    <div class="top-r">
+      <span id="updated" class="muted small"></span>
+      <button class="btn ghost" id="refreshBtn" title="Refresh">↻ Refresh</button>
+      <button class="btn ghost" id="outBtn">Sign out</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- OVERVIEW -->
+    <div class="tab" id="tab-overview">
+      <div class="tiles" id="tiles"></div>
+      <div class="grid2">
+        <div class="card"><div class="card-h"><h3>New players</h3><span class="muted small">Sign-ups per day, last 14 days</span></div><div class="chart" id="chSignups"></div></div>
+        <div class="card"><div class="card-h"><h3>Players by area</h3><span class="muted small">Where characters live</span></div><div class="hbars" id="chAreas"></div></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><div class="card-h"><h3>Richest characters</h3><span class="muted small">Cash plus bank</span></div><div id="topRich"></div></div>
+        <div class="card"><div class="card-h"><h3>Latest life events</h3><span class="muted small">Across all players</span></div><div id="miniFeed" class="feed"></div></div>
+      </div>
+    </div>
+
+    <!-- PLAYERS -->
+    <div class="tab" id="tab-players" hidden>
+      <div class="toolbar">
+        <input id="q" type="search" placeholder="Search username, email, character or area">
+        <select id="sort">
+          <option value="last_seen">Sort: last seen</option>
+          <option value="created_at">Sort: newest</option>
+          <option value="money">Sort: net worth</option>
+          <option value="game_day">Sort: game day</option>
+          <option value="play_minutes">Sort: time played</option>
+        </select>
+        <select id="filter">
+          <option value="all">All players</option>
+          <option value="online">Online now</option>
+          <option value="today">Active today</option>
+          <option value="nosave">No character yet</option>
+          <option value="banned">Banned</option>
+          <option value="admin">Admins</option>
+        </select>
+        <span class="muted small" id="pCount"></span>
+      </div>
+      <div class="card tablewrap">
+        <table class="tbl">
+          <thead><tr><th>Player</th><th>Character</th><th>Day · Age</th><th class="num">Net worth</th><th>Occupation</th><th>Relationship</th><th>Last seen</th><th>Status</th></tr></thead>
+          <tbody id="pRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ACTIVITY -->
+    <div class="tab" id="tab-activity" hidden>
+      <div class="toolbar">
+        <select id="evType"><option value="">All activity</option><option value="life">Life events</option><option value="signup">Sign-ups</option><option value="login">Logins</option></select>
+        <span class="muted small">Latest 300 events</span>
+      </div>
+      <div class="card"><div id="feed" class="feed big"></div></div>
+    </div>
+
+    <!-- ANNOUNCEMENTS -->
+    <div class="tab" id="tab-announce" hidden>
+      <div class="grid2">
+        <form class="card form" id="annForm">
+          <h3>New announcement</h3>
+          <p class="muted small">Every player receives it as an SMS and a pop-up the next time they play.</p>
+          <label>Title<input id="annTitle" maxlength="60" required placeholder="e.g. Weekend bonus"></label>
+          <label>Message<textarea id="annBody" maxlength="400" rows="4" required placeholder="What do you want to tell players?"></textarea></label>
+          <button class="btn primary" type="submit">Send to all players</button>
+        </form>
+        <div class="card"><div class="card-h"><h3>Sent announcements</h3></div><div id="annList"></div></div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- PLAYER DRAWER -->
+<div id="drawer" class="drawer" hidden>
+  <div class="drawer-bg" data-close></div>
+  <aside class="drawer-p">
+    <button class="x" data-close>✕</button>
+    <div id="dBody"></div>
+  </aside>
+</div>
+<div id="tip" class="tip" hidden></div>
+<div id="toast" class="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/config.js?v=5.4.0"></script>
+<script src="js/admin.js?v=5.4.0"></script>
+</body>
+</html>

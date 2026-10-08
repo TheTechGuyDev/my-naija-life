@@ -60,11 +60,14 @@ const yearsPassed = () => Math.floor((state.day - 1) / YEAR_DAYS);
 const ageNow = () => state.age0 + yearsPassed();
 
 function saveGame(silent){
-  if (!state) return;
+  if (!state || (typeof cloudLeaving !== 'undefined' && cloudLeaving)) return;
   if (typeof inside !== 'undefined' && inside && B[inside.id]){ const b = B[inside.id]; state.px = b.frontX; state.py = b.frontY + (b.door === 's' ? 6 : -6); }
   else { state.px = player.x; state.py = player.y; }
+  state.savedAt = Date.now();
+  if (typeof cloudUser !== 'undefined' && cloudUser) state.uid = cloudUser.id;
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); if (!silent) toast('Game saved.', 'info'); }
   catch (e) { if (!silent) toast('Could not save on this browser.', 'bad'); }
+  if (typeof cloudSaveSoon === 'function') cloudSaveSoon();
 }
 function loadGame(){
   try {

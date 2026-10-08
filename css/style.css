@@ -59,7 +59,7 @@ body.setup{background:radial-gradient(ellipse at 30% 20%,#1d6b3e 0%,#0b2a18 55%,
 #pBody li{margin-bottom:3px}
 #pBody .note{margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(255,210,63,.1);border:1px solid rgba(255,210,63,.3);font-size:12.5px}
 #pBody .warn{margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(255,90,90,.12);border:1px solid rgba(255,90,90,.35);font-size:12.5px}
-#pBody input[type=text]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(125,255,168,.4);background:rgba(0,0,0,.3);color:#fff;font-size:16px;-webkit-user-select:text;user-select:text;outline:none}
+#pBody input[type=text],#pBody input[type=email],#pBody input[type=password]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(125,255,168,.4);background:rgba(0,0,0,.3);color:#fff;font-size:16px;-webkit-user-select:text;user-select:text;outline:none}
 #pBody .sec{font-weight:800;margin:10px 0 4px;font-size:13px;color:#ffd23f}
 .qtext{font-size:17px;font-weight:700;line-height:1.4}
 #pOpts{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin-top:12px}
@@ -253,3 +253,4 @@ body.cam #hudWrap,body.cam #topRight,body.cam #hint,body.cam #actBtn{display:non
   .ph-lines{max-height:30vh}
   .ph-callscr{padding-top:.8em}
 }
+body.busy #pOpts{opacity:.55;pointer-events:none}

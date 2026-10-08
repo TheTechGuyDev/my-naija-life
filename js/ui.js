@@ -572,6 +572,7 @@ function worship(id, name, prayLabel){
 }
 
 const pTitle = $('pTitle'), pSub = $('pSub'), pBody = $('pBody'), pOpts = $('pOpts'), panelEl = $('panel');
+function panelLocked(k){ return k === 'setup' || k === 'banned' || ((k === 'auth' || k === 'chooseSave') && !state); }
 function openPanel(kind, data){
   panelState = {kind, data};
   paused = true;
@@ -580,12 +581,12 @@ function openPanel(kind, data){
   renderPanel();
   panelEl.classList.add('show');
   panelEl.querySelector('.box').scrollTop = 0;
-  $('pClose').style.display = kind === 'setup' ? 'none' : '';
+  $('pClose').style.display = panelLocked(kind) ? 'none' : '';
 }
 function closePanel(){
   if (panelState){
     const k = panelState.kind;
-    if (k === 'setup') return;
+    if (panelLocked(k)) return;
     if (k === 'quiz' && quiz){ finishQuiz(); return; }
     if (k === 'arrest'){ panelState = null; detain(); return; }
     if (k === 'checkpoint'){ panelState = null; checkpointComply(); return; }

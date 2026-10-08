@@ -20,6 +20,13 @@ Pick your name, gender, faith and area (Ikeja, Yaba, Surulere, Lekki, Wuse 2, Bo
 - **Path:** NIN (NIMC) → JAMB → university (lectures, exams, carryovers, SIWES) → NYSC → CV → interviews → jobs. Side hustles, Yahoo and police, housing and an okada.
 - **World:** 3D city with real street names, traffic lights, zebra crossings, accidents and GPS directions.
 
+## Accounts, online saves and admin (V5.4)
+
+- Players sign up with a username, email and password, and their life is saved online so they can continue on any device. Guests can play without an account and upload their progress later from **Menu → Save online**.
+- The **admin dashboard** is at `/admin.html`. It shows players online now, active today, sign-ups per day, players by area, the richest characters and a live feed of life events. You can open any player to see their character, credit money, send a message, restore their stats, ban or unban, give admin rights, reset their save or download it.
+- **Announcements** sent from the dashboard reach every player as an SMS and a pop-up.
+- The backend is Supabase. `supabase/schema.sql` creates the tables and the security rules. `js/config.js` holds the project URL and the public anon key. With an empty config the game runs offline as before.
+
 ## Controls
 
 | Action | PC | Mobile |
@@ -49,6 +56,10 @@ Pick your name, gender, faith and area (Ikeja, Yaba, Surulere, Lekki, Wuse 2, Bo
 | `js/ui.js` | Toasts, sound, building panels |
 | `js/panels.js` | Setup, people, family, events, Life Profile, home and shop panels |
 | `js/phone.js` | The phone simulator (NaijaOS) and all its apps |
+| `js/config.js` | Supabase URL and public key |
+| `js/cloud.js` | Sign up / sign in, online saves, admin actions, announcements |
+| `admin.html`, `js/admin.js`, `css/admin.css` | Admin dashboard |
+| `supabase/schema.sql` | Database tables and security rules |
 | `js/marriage.js` | Proposal, wedding steps, spouse, pregnancy, birth, naming, children and school fees |
 | `js/main.js` | Input, traffic, game loop, HUD, boot |
 

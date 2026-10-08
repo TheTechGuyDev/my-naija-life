@@ -637,7 +637,7 @@ async function enterBuilding(id){
   if (state.riding){ state.riding = false; toast('You parked your okada outside.', 'info'); }
   inside = inst;
   player.x = (inst.ox + inst.spawn[0]) / S; player.y = (inst.oz + inst.spawn[1]) / S; player.face = Math.PI; player.pose = null;
-  camS.yaw = 0; camS.dist = 7.5; camS.pitch = 0.85;
+  camS.yaw = 0; camS.dist = 7.5; camS.pitch = 0.85; camS.snap = true;
   camera.position.set(player.x * S, 6, player.y * S + 5);
   PATH = []; pathTimer = 0; lastTarget = '#';
   if (state.nav === id) state.nav = null;
@@ -654,7 +654,7 @@ async function exitBuilding(){
   inside.group.visible = false; inside = null; player.pose = null;
   const out = b.door === 's' ? 1 : -1;
   player.x = b.frontX; player.y = b.frontY + out * 6; player.face = out > 0 ? 0 : Math.PI;
-  camS.yaw = player.face + Math.PI; camS.dist = 9.5; camS.pitch = 0.32;
+  camS.yaw = player.face + Math.PI; camS.dist = 9.5; camS.pitch = 0.32; camS.snap = true;
   camera.position.set(player.x * S + Math.sin(camS.yaw) * 9, 4, player.y * S + Math.cos(camS.yaw) * 9);
   PATH = []; pathTimer = 0; lastTarget = '#';
   await new Promise(r => setTimeout(r, 120));

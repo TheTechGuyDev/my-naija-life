@@ -913,12 +913,13 @@ function render(dt, now){
   crumbs.count = n; crumbs.instanceMatrix.needsUpdate = true;
 
   // camera
-  const cDist = inside ? Math.min(camS.dist, 11) : camS.dist, cPitch = inside ? Math.max(camS.pitch, 0.5) : camS.pitch;
-  const hor = cDist * Math.cos(cPitch);
+  const tDist = inside ? Math.min(camS.dist, 11) : camS.dist, tPitch = inside ? Math.max(camS.pitch, 0.5) : camS.pitch;
+  const k = 1 - Math.exp(-dt * 10);
+  if (camS.cy === undefined || camS.snap){ camS.cy = camS.yaw; camS.cd = tDist; camS.cp = tPitch; camS.snap = false; }
+  camS.cy = turnTo(camS.cy, camS.yaw, k); camS.cd = lerp(camS.cd, tDist, k); camS.cp = lerp(camS.cp, tPitch, k);
+  const hor = camS.cd * Math.cos(camS.cp);
   const look = new THREE.Vector3(px, player.y3 + (player.pose === 'lie' ? 0.7 : player.pose === 'sit' ? 1.1 : 1.55), pz);
-  const want = new THREE.Vector3(px + Math.sin(camS.yaw) * hor, look.y + cDist * Math.sin(cPitch), pz + Math.cos(camS.yaw) * hor);
-  want.y = Math.max(want.y, 0.35);
-  camera.position.lerp(want, 1 - Math.exp(-dt * 10));
+  camera.position.set(px + Math.sin(camS.cy) * hor, Math.max(0.35, look.y + camS.cd * Math.sin(camS.cp)), pz + Math.cos(camS.cy) * hor);
   camera.lookAt(look);
   sky.position.copy(camera.position);
   if (inside) intRender(dt, now); else updateOcclusion(px, pz);
