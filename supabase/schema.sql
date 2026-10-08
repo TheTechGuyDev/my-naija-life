@@ -99,7 +99,8 @@ create trigger on_auth_user_created after insert on auth.users
 create or replace function public.protect_profile() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  if not public.is_admin() then
+  -- auth.uid() is null in the SQL Editor / service role: those are trusted
+  if auth.uid() is not null and not public.is_admin() then
     new.is_admin   := old.is_admin;
     new.banned     := old.banned;
     new.ban_reason := old.ban_reason;
@@ -116,7 +117,8 @@ create trigger protect_profile before update on public.profiles
 create or replace function public.protect_profile_insert() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  if not public.is_admin() then
+  -- auth.uid() is null in the SQL Editor / service role: those are trusted
+  if auth.uid() is not null and not public.is_admin() then
     new.is_admin := false;
     new.banned   := false;
   end if;
